@@ -2,13 +2,18 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Search, Eye, Briefcase } from 'lucide-react'
 import { getAllJobsAdmin } from '../../lib/queries'
+import { DEMO_JOBS as DEMO_JOBS_RAW } from '../../lib/demo-data'
 
-const DEMO_JOBS = [
-  { id: 'd1', title: 'Software Development Engineer', required_skills: ['DSA', 'System Design'], min_cgpa: 7.5, is_open: true, companies: { name: 'Google', verified: true } },
-  { id: 'd2', title: 'Software Engineer', required_skills: ['Python', 'ML'], min_cgpa: 7.0, is_open: true, companies: { name: 'Microsoft', verified: true } },
-  { id: 'd3', title: 'Systems Engineer', required_skills: ['Java', 'Communication'], min_cgpa: 6.5, is_open: true, companies: { name: 'TCS', verified: true } },
-  { id: 'd4', title: 'Technology Analyst', required_skills: ['Java', 'SQL'], min_cgpa: 6.5, is_open: false, companies: { name: 'Infosys', verified: true } },
-]
+const DEMO_JOBS = DEMO_JOBS_RAW.map(j => ({
+  id: j.id,
+  title: j.title,
+  required_skills: j.skills,
+  min_cgpa: j.minCgpa,
+  location: j.location,
+  work_mode: j.workMode,
+  is_open: j.isOpen,
+  companies: { name: j.companyName, verified: true },
+}))
 
 export function AdminJobPostings() {
   const [search, setSearch] = useState('')

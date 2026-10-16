@@ -4,6 +4,7 @@ import { Calendar, Clock, MapPin, Monitor, CheckCircle, Video, Plus } from 'luci
 import { Button } from '../../components/ui/Button'
 import { createInterview, getAllInterviews } from '../../lib/queries'
 import { supabase } from '../../lib/supabase'
+import { DEMO_INTERVIEWS as DEMO_INTERVIEWS_RAW } from '../../lib/demo-data'
 
 const statusConfig: Record<string, { bg: string; color: string }> = {
   scheduled: { bg: '#EEF0FF', color: '#4F46E5' },
@@ -12,28 +13,27 @@ const statusConfig: Record<string, { bg: string; color: string }> = {
   withdrawn: { bg: '#FEE2E2', color: '#EF4444' },
 }
 
-const DEMO_INTERVIEWS = [
-  {
-    id: 'd1',
-    students: { profiles: { full_name: 'Rahul Sharma' } },
-    jobs: { title: 'Software Development Engineer' },
-    companies: { name: 'Google' },
-    scheduled_at: new Date(Date.now() + 3 * 86400000).toISOString(),
-    mode: 'online',
-    status: 'scheduled',
-    round: 1,
-  },
-  {
-    id: 'd2',
-    students: { profiles: { full_name: 'Priya Mehta' } },
-    jobs: { title: 'Software Engineer' },
-    companies: { name: 'Microsoft' },
-    scheduled_at: new Date(Date.now() + 5 * 86400000).toISOString(),
-    mode: 'on_campus',
-    status: 'scheduled',
-    round: 1,
-  },
-]
+const timeToISO = (date: string, time: string) => {
+  const offsets: Record<string, string> = {
+    '10:00 AM': '04:30', '02:00 PM': '08:30', '11:00 AM': '05:30',
+    '09:30 AM': '04:00', '03:00 PM': '09:30', '01:00 PM': '07:30',
+    '11:30 AM': '06:00', '02:30 PM': '09:00',
+  }
+  return `${date}T${offsets[time] ?? '04:30'}:00Z`
+}
+const DEMO_INTERVIEWS = (DEMO_INTERVIEWS_RAW as any[]).map((i: any) => ({
+  id: i.id,
+  students: { profiles: { full_name: i.studentName } },
+  jobs: { title: i.role },
+  companies: { name: i.company },
+  scheduled_at: timeToISO(i.date, i.time),
+  mode: i.mode,
+  status: i.status,
+  round: i.round,
+  meeting_link: i.meetingLink ?? null,
+  location: (i as any).location ?? null,
+}))
+
 
 export function AdminInterviews() {
   const qc = useQueryClient()
@@ -123,7 +123,7 @@ export function AdminInterviews() {
     createMutation.mutate()
   }
 
-  const displayInterviews = interviews.length > 0 ? interviews : DEMO_INTERVIEWS
+  const displayInterviews = ((interviews as any[]).length > 0 ? interviews : DEMO_INTERVIEWS) as any[]
 
   return (
     <div className="space-y-6">

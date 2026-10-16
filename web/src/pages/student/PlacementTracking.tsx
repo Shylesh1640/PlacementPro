@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import {
   getStudentByProfileId, getStudentInterviews, getStudentPlacement, getStudentApplications
 } from '../../lib/queries'
+import { DEMO_PLACEMENTS } from '../../lib/demo-data'
 
 const STEP_LABELS = [
   'Assessments\nCompleted',
@@ -61,8 +62,10 @@ export function PlacementTracking() {
   const isDemo = !student
   const stepsCompleted = isDemo ? 5 : getStepsCompleted(student, interviews, placement, applications)
   const isPlaced = stepsCompleted >= 5
-  const placedAt = placement?.companies?.name ?? 'Google'
-  const placedRole = placement?.jobs?.title ?? 'Software Development Engineer'
+  const placedAt   = placement?.companies?.name   ?? DEMO_PLACEMENTS[0].company
+  const placedRole = placement?.jobs?.title        ?? DEMO_PLACEMENTS[0].role
+  const placedPkg  = placement?.package_lpa        ?? DEMO_PLACEMENTS[0].packageLpa
+  const joiningDate = placement?.joining_date      ?? DEMO_PLACEMENTS[0].joiningDate
 
   const progressMessages: Record<number, string> = {
     0: 'Start your journey by completing the assessments.',
@@ -154,20 +157,18 @@ export function PlacementTracking() {
           <p className="text-[#4B5563] text-sm mb-6 max-w-md mx-auto">
             You have been placed at <strong>{placedAt}</strong> as a <strong>{placedRole}</strong>!
           </p>
-          {placement && (
-            <div className="flex justify-center gap-4 text-sm text-[#4B5563] mb-6 flex-wrap">
-              {placement.package_lpa && (
-                <span className="px-3 py-1.5 rounded-full border border-[#E6E8F5]">
-                  💰 {placement.package_lpa} LPA
-                </span>
-              )}
-              {placement.joining_date && (
-                <span className="px-3 py-1.5 rounded-full border border-[#E6E8F5]">
-                  📅 Joining: {new Date(placement.joining_date).toLocaleDateString()}
-                </span>
-              )}
-            </div>
-          )}
+          <div className="flex justify-center gap-4 text-sm text-[#4B5563] mb-6 flex-wrap">
+            {placedPkg && (
+              <span className="px-3 py-1.5 rounded-full border border-[#E6E8F5]">
+                💰 ₹{placedPkg} LPA
+              </span>
+            )}
+            {joiningDate && (
+              <span className="px-3 py-1.5 rounded-full border border-[#E6E8F5]">
+                📅 Joining: {new Date(joiningDate).toLocaleDateString()}
+              </span>
+            )}
+          </div>
           <button
             className="text-sm font-medium px-6 py-2.5 rounded-lg text-white"
             style={{ background: '#4F46E5' }}

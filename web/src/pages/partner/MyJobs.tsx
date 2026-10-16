@@ -1,8 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { ToggleLeft, ToggleRight, Plus, Briefcase, Users } from 'lucide-react'
+import { ToggleLeft, ToggleRight, Plus, Users } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { getCompanyByProfileId, getCompanyJobs, toggleJobOpen } from '../../lib/queries'
+import { DEMO_JOBS as DEMO_JOBS_RAW } from '../../lib/demo-data'
+
+const GOOGLE_DEMO_JOBS = DEMO_JOBS_RAW.filter(j => j.companyName === 'Google').map(j => ({
+  id: j.id, title: j.title, required_skills: j.skills, min_cgpa: j.minCgpa,
+  location: j.location, work_mode: j.workMode, is_open: j.isOpen,
+  created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
+  applications: [{ count: j.applications }],
+}))
 
 export function MyJobs() {
   const { user } = useAuth()
@@ -30,7 +38,7 @@ export function MyJobs() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#111827]">My Jobs</h1>
-          <p className="text-sm text-[#4B5563] mt-0.5">{jobs.length} job{jobs.length !== 1 ? 's' : ''} posted</p>
+          <p className="text-sm text-[#4B5563] mt-0.5">{(jobs as any[]).length || GOOGLE_DEMO_JOBS.length} job{((jobs as any[]).length || GOOGLE_DEMO_JOBS.length) !== 1 ? 's' : ''} posted</p>
         </div>
         <Link to="/partner/post-job" className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg text-white" style={{ background: '#4F46E5' }}>
           <Plus size={16} /> Post New Job
@@ -41,17 +49,9 @@ export function MyJobs() {
         <div className="flex items-center justify-center h-40">
           <div className="animate-spin w-8 h-8 border-4 border-[#4F46E5] border-t-transparent rounded-full" />
         </div>
-      ) : jobs.length === 0 ? (
-        <div className="bg-white rounded-[12px] border border-[#E6E8F5] shadow-sm p-12 text-center">
-          <Briefcase size={40} className="mx-auto mb-3 text-gray-300" />
-          <p className="text-[#9CA3AF] mb-4">No jobs posted yet.</p>
-          <Link to="/partner/post-job" className="text-sm font-medium px-4 py-2 rounded-lg text-white inline-block" style={{ background: '#4F46E5' }}>
-            Post Your First Job
-          </Link>
-        </div>
       ) : (
         <div className="space-y-4">
-          {jobs.map((job: any) => {
+          {((jobs as any[]).length > 0 ? jobs as any[] : GOOGLE_DEMO_JOBS).map((job: any) => {
             const appCount = job.applications?.[0]?.count ?? 0
             return (
               <div key={job.id} className="bg-white rounded-[12px] border border-[#E6E8F5] shadow-sm p-5">

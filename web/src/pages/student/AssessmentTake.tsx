@@ -19,11 +19,16 @@ interface ProctoringEvent {
 }
 
 const FALLBACK_QUESTIONS = [
-  { id: 'fq1', question: 'If a train travels 120 km in 2 hours, what is its average speed?', option_a: '50 km/h', option_b: '60 km/h', option_c: '70 km/h', option_d: '80 km/h', correct_answer: 'B' },
-  { id: 'fq2', question: 'A man buys a TV for ₹15,000 and sells it for ₹18,000. What is his profit %?', option_a: '15%', option_b: '18%', option_c: '20%', option_d: '25%', correct_answer: 'C' },
-  { id: 'fq3', question: 'If 8 workers complete a job in 12 days, how many days will 6 workers take?', option_a: '14 days', option_b: '16 days', option_c: '18 days', option_d: '20 days', correct_answer: 'B' },
-  { id: 'fq4', question: 'What is the next number in the series: 2, 6, 12, 20, 30, ?', option_a: '40', option_b: '42', option_c: '44', option_d: '46', correct_answer: 'B' },
-  { id: 'fq5', question: 'A pipe fills a tank in 4h; another empties it in 6h. Both open: full in?', option_a: '8h', option_b: '10h', option_c: '12h', option_d: '14h', correct_answer: 'C' },
+  { id: 'fq1', question: 'Q1. If a train travels 120 km in 2 hours, what is its average speed?',                              option_a: '50 km/h',  option_b: '60 km/h',  option_c: '70 km/h',  option_d: '80 km/h',   correct_answer: 'B' },
+  { id: 'fq2', question: 'Q2. A man buys a TV for ₹15,000 and sells it for ₹18,000. What is his profit percentage?',         option_a: '15%',      option_b: '18%',      option_c: '20%',      option_d: '25%',       correct_answer: 'C' },
+  { id: 'fq3', question: 'Q3. If 8 workers can complete a job in 12 days, how many days will 6 workers take?',                option_a: '14 days',  option_b: '16 days',  option_c: '18 days',  option_d: '20 days',   correct_answer: 'B' },
+  { id: 'fq4', question: 'Q4. What is the next number in the series: 2, 6, 12, 20, 30, ?',                                   option_a: '40',       option_b: '42',       option_c: '44',       option_d: '46',        correct_answer: 'B' },
+  { id: 'fq5', question: 'Q5. A pipe fills a tank in 4 hours. Another empties it in 6 hours. Both open — how long to fill?', option_a: '8 hours',  option_b: '10 hours', option_c: '12 hours', option_d: '14 hours',  correct_answer: 'C' },
+  { id: 'fq6', question: 'Q6. If the simple interest on ₹5,000 at 8% per annum for 3 years is?',                             option_a: '₹1,000',  option_b: '₹1,200',  option_c: '₹1,400',  option_d: '₹1,600',   correct_answer: 'B' },
+  { id: 'fq7', question: 'Q7. A shopkeeper offers 20% discount. The original price is ₹500. What is the selling price?',     option_a: '₹350',    option_b: '₹380',    option_c: '₹400',    option_d: '₹420',     correct_answer: 'C' },
+  { id: 'fq8', question: 'Q8. In a class of 60 students, 40% are girls. How many boys are there?',                           option_a: '24',       option_b: '32',       option_c: '36',       option_d: '40',        correct_answer: 'C' },
+  { id: 'fq9', question: 'Q9. If ABCD is coded as 2345, then what is the code for DCBA?',                                    option_a: '4321',     option_b: '5432',     option_c: '5324',     option_d: '4352',      correct_answer: 'B' },
+  { id: 'fq10',question: 'Q10. Two numbers are in ratio 3:5. If their sum is 96, what is the larger number?',                option_a: '36',       option_b: '48',       option_c: '60',       option_d: '72',        correct_answer: 'C' },
 ]
 
 const TOTAL_SECONDS = 45 * 60 + 23

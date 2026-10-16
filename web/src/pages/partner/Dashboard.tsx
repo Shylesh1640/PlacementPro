@@ -14,9 +14,11 @@ const statusConfig: Record<string, { bg: string; color: string; label: string }>
 }
 
 const DEMO_APPS = [
-  { id: 'd1', student: 'Rahul Sharma', role: 'Software Development Engineer', match: 95, status: 'under_review' },
-  { id: 'd2', student: 'Priya Mehta',  role: 'Software Development Engineer', match: 78, status: 'applied' },
-  { id: 'd3', student: 'Arjun Nair',   role: 'Software Development Engineer', match: 82, status: 'shortlisted' },
+  { id: 'd1', student: 'Rahul Sharma',  role: 'Software Development Engineer', match: 95, status: 'shortlisted',  readiness: 92.5, cgpa: 8.5 },
+  { id: 'd2', student: 'Aisha Khan',    role: 'Software Development Engineer', match: 90, status: 'shortlisted',  readiness: 91.0, cgpa: 8.9 },
+  { id: 'd3', student: 'Arjun Nair',    role: 'Data Engineer',                  match: 84, status: 'under_review', readiness: 88.0, cgpa: 9.1 },
+  { id: 'd4', student: 'Vikram Singh',  role: 'Software Development Engineer', match: 72, status: 'applied',       readiness: 72.0, cgpa: 7.4 },
+  { id: 'd5', student: 'Priya Mehta',   role: 'Software Development Engineer', match: 68, status: 'applied',       readiness: 75.0, cgpa: 7.8 },
 ]
 
 export function PartnerDashboard() {
@@ -117,6 +119,7 @@ export function PartnerDashboard() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-[#111827]">{app.student}</p>
                   <p className="text-xs text-[#9CA3AF] truncate">{app.role}</p>
+                  {app.cgpa && <p className="text-xs text-[#9CA3AF]">CGPA: {app.cgpa} · Readiness: {app.readiness}</p>}
                 </div>
                 {app.match != null && (
                   <div className="text-xs font-bold px-2 py-1 rounded-full" style={{ background: '#DCFCE7', color: '#16A34A' }}>

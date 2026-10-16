@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Calendar, Clock, MapPin, Video, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { getStudentByProfileId, getStudentInterviews } from '../../lib/queries'
+import { DEMO_INTERVIEWS as DEMO_INTERVIEWS_DATA } from '../../lib/demo-data'
 
 const statusConfig: Record<string, { bg: string; color: string; label: string }> = {
   scheduled: { bg: '#EEF0FF', color: '#4F46E5', label: 'Scheduled' },
@@ -22,21 +23,7 @@ const outcomeColors: Record<string, string> = {
   pending: '#F59E0B',
 }
 
-const DEMO_INTERVIEWS = [
-  {
-    id: 'd1',
-    status: 'scheduled',
-    mode: 'online',
-    round: 1,
-    scheduled_at: new Date(Date.now() + 3 * 86400000).toISOString(),
-    meeting_link: null,
-    location: null,
-    feedback: null,
-    outcome: null,
-    jobs: { title: 'Software Development Engineer' },
-    companies: { name: 'Google', logo_url: null },
-  },
-]
+const DEMO_INTERVIEWS = DEMO_INTERVIEWS_DATA
 
 interface InterviewSectionProps {
   title: string

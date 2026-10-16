@@ -1,11 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Globe, Clock, CheckCircle, XCircle, Shield } from 'lucide-react'
 import { getAllCompanies, verifyCompany } from '../../lib/queries'
+import { DEMO_COMPANIES as DEMO_COMPANIES_RAW } from '../../lib/demo-data'
 
 const DEMO_COMPANIES = [
-  { id: 'd1', name: 'StartupAI', industry: 'EdTech', website: 'startup-ai.com', created_at: new Date(Date.now() - 86400000).toISOString(), verified: false },
-  { id: 'd2', name: 'Wipro Technologies', industry: 'IT Services', website: 'wipro.com', created_at: new Date(Date.now() - 2 * 86400000).toISOString(), verified: false },
-  { id: 'd3', name: 'Amazon India', industry: 'E-Commerce', website: 'amazon.in', created_at: new Date(Date.now() - 5 * 86400000).toISOString(), verified: true },
+  { id: 'pending-1', name: 'StartupAI Technologies',  industry: 'EdTech',           website: 'startup-ai.com',  created_at: new Date(Date.now() - 86400000).toISOString(),     verified: false },
+  { id: 'pending-2', name: 'DataVision Analytics',    industry: 'Data Analytics',   website: 'datavision.io',   created_at: new Date(Date.now() - 2 * 86400000).toISOString(), verified: false },
+  ...DEMO_COMPANIES_RAW.map(c => ({
+    id: c.id, name: c.name, industry: c.industry, website: c.logo ?? '',
+    created_at: new Date(Date.now() - 7 * 86400000).toISOString(), verified: c.verified,
+  })),
 ]
 
 export function CompanyVerification() {

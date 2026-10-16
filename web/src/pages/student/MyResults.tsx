@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import {
   getStudentByProfileId, getReadinessScore, getSkillGaps, getAssessmentResults
 } from '../../lib/queries'
+import { DEMO_RESULTS } from '../../lib/demo-data'
 
 const RADIUS = 70
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
@@ -60,7 +61,7 @@ export function MyResults() {
     enabled: !!student?.id,
   })
 
-  const score = readiness?.total_score ?? 92.5
+  const score = readiness?.total_score ?? DEMO_RESULTS.readiness.total_score
   const displayScore = parseFloat(score.toString())
 
   const statusLabel = readiness?.status === 'needs_improvement' ? 'Needs Improvement'
@@ -73,20 +74,24 @@ export function MyResults() {
 
   const performanceBars = readiness
     ? [
-        { name: 'Aptitude', score: readiness.aptitude_score, color: '#4F46E5' },
-        { name: 'Programming', score: readiness.programming_score, color: '#7C3AED' },
-        { name: 'Communication', score: readiness.communication_score, color: '#16A34A' },
-        { name: 'Academic', score: readiness.academic_score, color: '#3B82F6' },
+        { name: 'Aptitude',       score: readiness.aptitude_score,       color: '#4F46E5' },
+        { name: 'Programming',    score: readiness.programming_score,    color: '#7C3AED' },
+        { name: 'Communication',  score: readiness.communication_score,  color: '#16A34A' },
+        { name: 'Academic',       score: readiness.academic_score,       color: '#3B82F6' },
       ]
     : [
-        { name: 'Aptitude', score: 94, color: '#4F46E5' },
-        { name: 'Programming', score: 90, color: '#7C3AED' },
-        { name: 'Communication', score: 96, color: '#16A34A' },
+        { name: 'Aptitude',       score: DEMO_RESULTS.readiness.aptitude_score,       color: '#4F46E5' },
+        { name: 'Programming',    score: DEMO_RESULTS.readiness.programming_score,    color: '#7C3AED' },
+        { name: 'Communication',  score: DEMO_RESULTS.readiness.communication_score,  color: '#16A34A' },
+        { name: 'Academic',       score: DEMO_RESULTS.readiness.academic_score,       color: '#3B82F6' },
       ]
 
   const recommendation = (skillGaps as any[]).length > 0
-    ? `Focus on improving: ${(skillGaps as any[]).slice(0, 2).map((g: any) => g.skill_name).join(', ')}.`
-    : 'Great progress! You are well prepared for placement. Focus on strengthening advanced Data Structures and System Design for even better opportunities.'
+    ? `Focus on: ${(skillGaps as any[]).slice(0, 2).map((g: any) => `${g.skill_name} (gap ${Math.round(g.gap)}pts)`).join(' and ')}.`
+    : DEMO_RESULTS.skillGaps[0]?.recommendation ?? 'Great progress! Focus on strengthening advanced Data Structures and System Design for even better opportunities.'
+
+  // Show demo assessment scores when DB has no results
+  const displayResults = (results as any[]).length > 0 ? (results as any[]) : DEMO_RESULTS.assessments
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-64">
@@ -145,40 +150,38 @@ export function MyResults() {
         </div>
       </div>
 
-      {(results as any[]).length > 0 && (
-        <div className="bg-white rounded-[12px] border border-[#E6E8F5] shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-[#E6E8F5]">
-            <h3 className="text-base font-semibold text-[#111827]">Assessment Scores</h3>
-          </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50/50 border-b border-[#E6E8F5]">
-                {['Assessment', 'Category', 'Score', '%'].map(h => (
-                  <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-[#9CA3AF] uppercase tracking-wide">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#F3F4F6]">
-              {(results as any[]).map(r => (
-                <tr key={r.id} className="hover:bg-gray-50/50">
-                  <td className="px-5 py-3.5 font-medium text-[#111827]">{r.assessments?.title ?? 'Assessment'}</td>
-                  <td className="px-5 py-3.5 text-[#4B5563] capitalize">{r.assessments?.category ?? '-'}</td>
-                  <td className="px-5 py-3.5 font-semibold text-[#111827]">{r.total_score}</td>
-                  <td className="px-5 py-3.5">
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full"
-                      style={{
-                        background: r.percentage >= 80 ? '#DCFCE7' : r.percentage >= 60 ? '#FFF7ED' : '#FEE2E2',
-                        color: r.percentage >= 80 ? '#16A34A' : r.percentage >= 60 ? '#F59E0B' : '#EF4444'
-                      }}>
-                      {Math.round(r.percentage)}%
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="bg-white rounded-[12px] border border-[#E6E8F5] shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-[#E6E8F5]">
+          <h3 className="text-base font-semibold text-[#111827]">Assessment Scores</h3>
         </div>
-      )}
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-gray-50/50 border-b border-[#E6E8F5]">
+              {['Assessment', 'Category', 'Score', '%'].map(h => (
+                <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-[#9CA3AF] uppercase tracking-wide">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#F3F4F6]">
+            {displayResults.map((r: any, idx: number) => (
+              <tr key={r.id ?? idx} className="hover:bg-gray-50/50">
+                <td className="px-5 py-3.5 font-medium text-[#111827]">{r.assessments?.title ?? r.title}</td>
+                <td className="px-5 py-3.5 text-[#4B5563] capitalize">{r.assessments?.category ?? r.category}</td>
+                <td className="px-5 py-3.5 font-semibold text-[#111827]">{r.total_score}</td>
+                <td className="px-5 py-3.5">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                    style={{
+                      background: r.percentage >= 80 ? '#DCFCE7' : r.percentage >= 60 ? '#FFF7ED' : '#FEE2E2',
+                      color:      r.percentage >= 80 ? '#16A34A' : r.percentage >= 60 ? '#F59E0B' : '#EF4444'
+                    }}>
+                    {Math.round(r.percentage)}%
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

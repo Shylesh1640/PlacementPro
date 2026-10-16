@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Search, Download, Eye } from 'lucide-react'
 import { getAllStudentsAdmin } from '../../lib/queries'
 import { Modal } from '../../components/ui/Modal'
+import { DEMO_STUDENTS as DS } from '../../lib/demo-data'
 
 const statusConfig: Record<string, { label: string; bg: string; color: string }> = {
   placement_ready: { label: 'Ready', bg: '#DCFCE7', color: '#16A34A' },
@@ -16,13 +17,19 @@ const proctoringConfig: Record<string, { label: string; bg: string; color: strin
   flagged: { label: 'Flagged', bg: '#FEE2E2', color: '#EF4444' },
 }
 
-const DEMO_STUDENTS = [
-  { id: 'd1', profiles: { full_name: 'Rahul Sharma', email: 'rahul.sharma@student.placementpro.dev' }, department: 'Computer Science', cgpa: 8.5, tenth_percent: 92, twelfth_percent: 88, backlogs: 0, readiness_scores: [{ total_score: 92.5, status: 'placement_ready' }], proctoring_status: 'normal', placement_status: 'matched' },
-  { id: 'd2', profiles: { full_name: 'Priya Mehta', email: 'priya.mehta@student.placementpro.dev' }, department: 'Information Technology', cgpa: 7.8, tenth_percent: 85, twelfth_percent: 82, backlogs: 1, readiness_scores: [{ total_score: 75.0, status: 'needs_improvement' }], proctoring_status: 'review_required', placement_status: 'pending' },
-  { id: 'd3', profiles: { full_name: 'Arjun Nair', email: 'arjun.nair@student.placementpro.dev' }, department: 'Electronics', cgpa: 9.1, tenth_percent: 95, twelfth_percent: 93, backlogs: 0, readiness_scores: [{ total_score: 88.0, status: 'placement_ready' }], proctoring_status: 'normal', placement_status: 'interview_scheduled' },
-  { id: 'd4', profiles: { full_name: 'Sneha Patel', email: 'sneha.patel@student.placementpro.dev' }, department: 'Computer Science', cgpa: 6.5, tenth_percent: 78, twelfth_percent: 74, backlogs: 2, readiness_scores: [{ total_score: 55.0, status: 'at_risk' }], proctoring_status: 'flagged', placement_status: 'pending' },
-  { id: 'd5', profiles: { full_name: 'Meera Iyer', email: 'meera.iyer@student.placementpro.dev' }, department: 'Information Technology', cgpa: 9.3, tenth_percent: 97, twelfth_percent: 94, backlogs: 0, readiness_scores: [{ total_score: 95.0, status: 'placement_ready' }], proctoring_status: 'normal', placement_status: 'placed' },
-]
+// Shaped to match the DB structure the component renders
+const DEMO_STUDENTS = DS.map(s => ({
+  id: s.id,
+  profiles: { full_name: s.name, email: s.email },
+  department: s.dept,
+  cgpa: s.cgpa,
+  tenth_percent: s.tenth,
+  twelfth_percent: s.twelfth,
+  backlogs: s.backlogs,
+  readiness_scores: [{ total_score: s.readiness, status: s.placement_status === 'placed' || s.readiness >= 80 ? 'placement_ready' : s.readiness >= 60 ? 'needs_improvement' : 'at_risk' }],
+  proctoring_status: s.proctoring,
+  placement_status: s.placement_status,
+}))
 
 export function AdminStudents() {
   const [search, setSearch] = useState('')

@@ -12,8 +12,9 @@ const statusConfig: Record<string, { bg: string; color: string }> = {
 }
 
 const DEMO = [
-  { id: 'd1', scheduled_at: new Date(Date.now() + 3 * 86400000).toISOString(), mode: 'online',    status: 'scheduled', round: 1, meeting_link: null, location: null, students: { profiles: { full_name: 'Rahul Sharma' } }, jobs: { title: 'Software Development Engineer' } },
-  { id: 'd2', scheduled_at: new Date(Date.now() + 5 * 86400000).toISOString(), mode: 'on_campus', status: 'scheduled', round: 1, meeting_link: null, location: 'Room 101, Block A', students: { profiles: { full_name: 'Arjun Nair' } }, jobs: { title: 'Software Development Engineer' } },
+  { id: 'd-i1', scheduled_at: '2026-11-15T04:30:00Z', mode: 'online',    status: 'completed', round: 1, meeting_link: 'https://meet.google.com/abc-defg-hij', location: null,                students: { profiles: { full_name: 'Rahul Sharma' } }, jobs: { title: 'Software Development Engineer' } },
+  { id: 'd-i2', scheduled_at: '2026-11-20T05:30:00Z', mode: 'online',    status: 'scheduled', round: 1, meeting_link: 'https://meet.google.com/xyz-abcd-efg', location: null,                students: { profiles: { full_name: 'Aisha Khan'   } }, jobs: { title: 'Data Engineer'                 } },
+  { id: 'd-i3', scheduled_at: '2026-12-05T04:00:00Z', mode: 'on_campus', status: 'scheduled', round: 2, meeting_link: null,                                   location: 'Main Auditorium, Block A', students: { profiles: { full_name: 'Arjun Nair'   } }, jobs: { title: 'Software Development Engineer' } },
 ]
 
 export function PartnerInterviews() {

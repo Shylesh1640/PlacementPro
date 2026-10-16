@@ -4,22 +4,10 @@ import {
   PieChart, Pie, Cell, Legend, LineChart, Line
 } from 'recharts'
 import { getDepartmentStats, getPlacementChartData, getAdminStats } from '../../lib/queries'
+import { DEMO_DEPT_STATS, DEMO_CHART_DATA } from '../../lib/demo-data'
 
-const DEMO_DEPT = [
-  { dept: 'CS', placed: 180, total: 200 },
-  { dept: 'IT', placed: 120, total: 150 },
-  { dept: 'ECE', placed: 90, total: 130 },
-  { dept: 'ME', placed: 45, total: 100 },
-  { dept: 'Civil', placed: 30, total: 80 },
-]
-
-const DEMO_CHART = [
-  { month: 'Aug', placements: 180 },
-  { month: 'Sep', placements: 290 },
-  { month: 'Oct', placements: 350 },
-  { month: 'Nov', placements: 480 },
-  { month: 'Dec', placements: 620 },
-]
+const DEMO_DEPT  = DEMO_DEPT_STATS
+const DEMO_CHART = DEMO_CHART_DATA
 
 const PIE_COLORS = ['#16A34A', '#4F46E5', '#9CA3AF']
 
@@ -44,16 +32,17 @@ export function AdminAnalytics() {
 
   const placed = deptData.reduce((a: number, d: any) => a + (d.placed ?? 0), 0)
   const total = deptData.reduce((a: number, d: any) => a + (d.total ?? d.placed ?? 0), 0)
-  const inProgress = Math.max(0, (stats?.students ?? 1250) - placed - Math.round((stats?.students ?? 1250) * 0.2))
-  const notStarted = Math.max(0, (stats?.students ?? 1250) - placed - inProgress)
+  const totalStudents = stats?.students ?? DEMO_ADMIN_STATS.students
+  const inProgress = Math.max(0, totalStudents - placed - Math.round(totalStudents * 0.2))
+  const notStarted = Math.max(0, totalStudents - placed - inProgress)
 
   const placementPie = [
-    { name: 'Placed', value: placed || 465 },
+    { name: 'Placed',      value: placed     || DEMO_ADMIN_STATS.placements },
     { name: 'In Progress', value: inProgress || 520 },
     { name: 'Not Started', value: notStarted || 265 },
   ]
 
-  const placementRate = total > 0 ? Math.round((placed / total) * 100) : 37
+  const placementRate = total > 0 ? Math.round((placed / total) * 100) : DEMO_ADMIN_STATS.placementRate
 
   return (
     <div className="space-y-6">

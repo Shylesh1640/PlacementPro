@@ -4,14 +4,9 @@ import { Users, Building2, Calendar, ClipboardList, ArrowRight } from 'lucide-re
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { getAdminStats, getPlacementChartData } from '../../lib/queries'
 import { supabase } from '../../lib/supabase'
+import { DEMO_CHART_DATA, DEMO_RECENT_ACTIVITIES } from '../../lib/demo-data'
 
-const DEMO_CHART = [
-  { month: 'Aug', placements: 180 },
-  { month: 'Sep', placements: 290 },
-  { month: 'Oct', placements: 350 },
-  { month: 'Nov', placements: 480 },
-  { month: 'Dec', placements: 620 },
-]
+const DEMO_CHART = DEMO_CHART_DATA
 
 const activityColors: Record<string, { bg: string; dot: string }> = {
   job: { bg: '#EEF0FF', dot: '#4F46E5' },
@@ -78,19 +73,16 @@ export function AdminDashboard() {
 
   const chartData = chartRaw.length > 0 ? chartRaw : DEMO_CHART
 
-  const recentActivities = [
-    ...recentJobs,
-    ...recentInterviews,
-    { id: 'demo-1', text: 'New job posted by Google', time: '2m ago', type: 'job' },
-    { id: 'demo-2', text: 'Interview scheduled: Rahul S', time: '5m ago', type: 'interview' },
-    { id: 'demo-3', text: 'Assessment completed: 45 students', time: '10m ago', type: 'assessment' },
-  ].slice(0, 5)
+  const liveActivities = [...recentJobs, ...recentInterviews]
+  const recentActivities = liveActivities.length > 0
+    ? liveActivities.slice(0, 5)
+    : DEMO_RECENT_ACTIVITIES
 
   const kpiCards = [
-    { title: 'Total Students', value: stats?.students ?? 1250, icon: <Users size={22} style={{ color: '#4F46E5' }} />, iconBg: '#EEF0FF' },
-    { title: 'Total Companies', value: stats?.companies ?? 120, icon: <Building2 size={22} style={{ color: '#16A34A' }} />, iconBg: '#DCFCE7' },
-    { title: 'Upcoming Interviews', value: stats?.upcomingInterviews ?? 85, icon: <Calendar size={22} style={{ color: '#F59E0B' }} />, iconBg: '#FFF7ED' },
-    { title: 'Active Assessments', value: stats?.activeAssessments ?? 3, icon: <ClipboardList size={22} style={{ color: '#7C3AED' }} />, iconBg: '#F3E8FF' },
+    { title: 'Total Students',      value: stats?.students           ?? 1250, icon: <Users       size={22} style={{ color: '#4F46E5' }} />, iconBg: '#EEF0FF' },
+    { title: 'Total Companies',     value: stats?.companies          ?? 120,  icon: <Building2   size={22} style={{ color: '#16A34A' }} />, iconBg: '#DCFCE7' },
+    { title: 'Upcoming Interviews', value: stats?.upcomingInterviews ?? 85,   icon: <Calendar    size={22} style={{ color: '#F59E0B' }} />, iconBg: '#FFF7ED' },
+    { title: 'Active Assessments',  value: stats?.activeAssessments  ?? 3,    icon: <ClipboardList size={22} style={{ color: '#7C3AED' }} />, iconBg: '#F3E8FF' },
   ]
 
   return (

@@ -6,33 +6,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import {
   getStudentByProfileId, getJobMatches, applyToJob, getStudentApplications
 } from '../../lib/queries'
-
-const DEMO_MATCHES = [
-  {
-    id: 'd1', match_percentage: 95,
-    matched_skills: ['DSA', 'System Design', 'Problem Solving'],
-    missing_skills: ['Kubernetes'], eligibility_status: 'eligible',
-    explanation: 'Strong DSA and system design skills align well.',
-    recommendations: ['Learn Kubernetes basics'],
-    jobs: { title: 'Software Development Engineer', companies: { name: 'Google', logo_url: null } },
-  },
-  {
-    id: 'd2', match_percentage: 92,
-    matched_skills: ['Python', 'ML', 'Data Analysis'],
-    missing_skills: ['Azure'], eligibility_status: 'eligible',
-    explanation: 'Excellent ML and Python skills match the role.',
-    recommendations: ['Explore Azure fundamentals'],
-    jobs: { title: 'Software Engineer', companies: { name: 'Microsoft', logo_url: null } },
-  },
-  {
-    id: 'd3', match_percentage: 88,
-    matched_skills: ['Java', 'Communication'],
-    missing_skills: [], eligibility_status: 'eligible',
-    explanation: 'Good overall profile for this role.',
-    recommendations: ['Practice TCS NQT'],
-    jobs: { title: 'Systems Engineer', companies: { name: 'TCS', logo_url: null } },
-  },
-]
+import { DEMO_MATCHES } from '../../lib/demo-data'
 
 const LOGO_COLORS: Record<string, { color: string; bg: string }> = {
   Google: { color: '#4285F4', bg: '#E8F0FE' },

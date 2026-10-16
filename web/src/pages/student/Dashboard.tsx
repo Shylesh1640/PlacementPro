@@ -7,20 +7,20 @@ import {
   getStudentByProfileId, getStudentAttempts, getReadinessScore,
   getSkillGaps, getJobMatches, getStudentInterviews, applyToJob
 } from '../../lib/queries'
+import {
+  DEMO_MATCHES, DEMO_SKILL_RADAR, DEMO_RESULTS, DEMO_COMPANIES
+} from '../../lib/demo-data'
 
-const DEMO_JOBS = [
-  { id: '1', company: 'Google', role: 'Software Development Engineer', match: 95, logo: 'G', logoColor: '#4285F4', logoBg: '#E8F0FE' },
-  { id: '2', company: 'Microsoft', role: 'Software Engineer', match: 92, logo: 'M', logoColor: '#00A4EF', logoBg: '#E3F5FD' },
-  { id: '3', company: 'TCS', role: 'Systems Engineer', match: 88, logo: 'T', logoColor: '#E31837', logoBg: '#FDEAED' },
-]
+const LOGO_MAP: Record<string, { color: string; bg: string }> = Object.fromEntries(
+  DEMO_COMPANIES.map(c => [c.name, { color: c.logoColor, bg: c.logoBg }])
+)
 
-const DEMO_SKILLS = [
-  { subject: 'Programming', student: 90, target: 80 },
-  { subject: 'Communication', student: 96, target: 80 },
-  { subject: 'Aptitude', student: 94, target: 80 },
-  { subject: 'Technical Skills', student: 85, target: 80 },
-  { subject: 'Problem Solving', student: 88, target: 80 },
-]
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const DEMO_JOBS = (DEMO_MATCHES as any[]).slice(0, 3).map((m: any) => {
+  const name: string = m.company ?? 'Company'
+  const ls = LOGO_MAP[name] ?? { color: '#4F46E5', bg: '#EEF0FF' }
+  return { id: m.id, company: name, role: m.role, match: m.matchPct, logo: name[0], logoColor: ls.color, logoBg: ls.bg }
+})
 
 export function StudentDashboard() {
   const { user } = useAuth()
@@ -63,17 +63,17 @@ export function StudentDashboard() {
     enabled: !!student?.id,
   })
 
-  const readinessScore = readiness?.total_score ?? 92.5
+  const readinessScore = readiness?.total_score ?? DEMO_RESULTS.readiness.total_score
   const completedCount = (attempts as any[]).filter(a => a.status === 'submitted' || a.status === 'auto_submitted').length
   const upcomingInterviews = (interviews as any[]).filter(i => i.status === 'scheduled').length
 
   const skillData = (skillGapsRaw as any[]).length > 0
-    ? (skillGapsRaw as any[]).slice(0, 5).map(g => ({
+    ? (skillGapsRaw as any[]).slice(0, 5).map((g: any) => ({
         subject: g.skill_name,
         student: g.current_score,
         target: g.target_score,
       }))
-    : DEMO_SKILLS
+    : DEMO_SKILL_RADAR
 
   const applyMutation = useMutation({
     mutationFn: ({ studentId, jobId }: { studentId: string; jobId: string }) =>

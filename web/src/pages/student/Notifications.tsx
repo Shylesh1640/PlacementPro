@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Bell, CheckCheck, Info, CheckCircle, AlertTriangle, XCircle } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from '../../lib/queries'
+import { DEMO_NOTIFICATIONS } from '../../lib/demo-data'
 
 const typeIcons: Record<string, React.ReactNode> = {
   info: <Info size={15} style={{ color: '#3B82F6' }} />,
@@ -17,12 +18,7 @@ const typeBg: Record<string, string> = {
   error: '#FEE2E2',
 }
 
-const DEMO_NOTIFS = [
-  { id: 'd1', title: 'New Job Match Found!', message: 'You have a 95% match with Google – Software Development Engineer', type: 'success', is_read: false, created_at: new Date(Date.now() - 2 * 60000).toISOString() },
-  { id: 'd2', title: 'Assessment Results Ready', message: 'Your Aptitude Test results are available. Score: 94%', type: 'info', is_read: false, created_at: new Date(Date.now() - 60 * 60000).toISOString() },
-  { id: 'd3', title: 'Interview Scheduled', message: 'Interview with Google on Nov 15, 2026 at 10:00 AM', type: 'info', is_read: true, created_at: new Date(Date.now() - 3 * 3600000).toISOString() },
-  { id: 'd4', title: 'Profile Incomplete', message: 'Please upload your resume to improve your placement chances', type: 'warning', is_read: true, created_at: new Date(Date.now() - 86400000).toISOString() },
-]
+const DEMO_NOTIFS = DEMO_NOTIFICATIONS
 
 function timeAgo(dateStr: string) {
   const diff = (Date.now() - new Date(dateStr).getTime()) / 1000

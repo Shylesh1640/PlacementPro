@@ -18,12 +18,12 @@ const procConfig: Record<string, { bg: string; color: string; label: string }> =
 }
 
 const DEMO_APPLICATIONS = [
-  { id: 'd1', status: 'under_review', applied_at: new Date().toISOString(), jobs: { title: 'Software Development Engineer' },
-    students: { cgpa: 8.5, backlogs: 0, readiness_score: 92.5, proctoring_status: 'normal', profiles: { full_name: 'Rahul Sharma', email: 'rahul.sharma@student.placementpro.dev' } } },
-  { id: 'd2', status: 'applied', applied_at: new Date().toISOString(), jobs: { title: 'Software Development Engineer' },
-    students: { cgpa: 7.8, backlogs: 1, readiness_score: 75.0, proctoring_status: 'review_required', profiles: { full_name: 'Priya Mehta', email: 'priya.mehta@student.placementpro.dev' } } },
-  { id: 'd3', status: 'shortlisted', applied_at: new Date().toISOString(), jobs: { title: 'Software Development Engineer' },
-    students: { cgpa: 9.1, backlogs: 0, readiness_score: 88.0, proctoring_status: 'normal', profiles: { full_name: 'Arjun Nair', email: 'arjun.nair@student.placementpro.dev' } } },
+  { id: 'd1', status: 'shortlisted',  applied_at: new Date().toISOString(), jobs: { title: 'Software Development Engineer' }, students: { cgpa: 8.5, backlogs: 0, readiness_score: 92.5, proctoring_status: 'normal',          profiles: { full_name: 'Rahul Sharma', email: 'rahul.sharma@student.placementpro.dev' } } },
+  { id: 'd2', status: 'shortlisted',  applied_at: new Date().toISOString(), jobs: { title: 'Software Development Engineer' }, students: { cgpa: 8.9, backlogs: 0, readiness_score: 91.0, proctoring_status: 'normal',          profiles: { full_name: 'Aisha Khan',   email: 'aisha.khan@student.placementpro.dev'   } } },
+  { id: 'd3', status: 'under_review', applied_at: new Date().toISOString(), jobs: { title: 'Data Engineer'                 }, students: { cgpa: 9.1, backlogs: 0, readiness_score: 88.0, proctoring_status: 'normal',          profiles: { full_name: 'Arjun Nair',   email: 'arjun.nair@student.placementpro.dev'   } } },
+  { id: 'd4', status: 'applied',      applied_at: new Date().toISOString(), jobs: { title: 'Software Development Engineer' }, students: { cgpa: 7.4, backlogs: 1, readiness_score: 72.0, proctoring_status: 'normal',          profiles: { full_name: 'Vikram Singh', email: 'vikram.singh@student.placementpro.dev' } } },
+  { id: 'd5', status: 'applied',      applied_at: new Date().toISOString(), jobs: { title: 'Software Development Engineer' }, students: { cgpa: 7.8, backlogs: 1, readiness_score: 75.0, proctoring_status: 'review_required', profiles: { full_name: 'Priya Mehta',  email: 'priya.mehta@student.placementpro.dev'  } } },
+  { id: 'd6', status: 'rejected',     applied_at: new Date().toISOString(), jobs: { title: 'Data Engineer'                 }, students: { cgpa: 6.9, backlogs: 3, readiness_score: 50.0, proctoring_status: 'review_required', profiles: { full_name: 'Rohan Gupta',  email: 'rohan.gupta@student.placementpro.dev'  } } },
 ]
 
 export function Applications() {

@@ -5,6 +5,7 @@ import { Modal } from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
 import { Textarea } from '../../components/ui/Textarea'
 import { getProctoringEvents, reviewProctoringEvent } from '../../lib/queries'
+import { DEMO_PROCTORING_EVENTS } from '../../lib/demo-data'
 
 const eventLabels: Record<string, string> = {
   multiple_persons: 'Multiple Persons Detected',
@@ -20,11 +21,18 @@ const severityConfig: Record<string, { bg: string; color: string; border: string
   low: { bg: '#F0FFF4', color: '#16A34A', border: '#A7F3D0' },
 }
 
-const DEMO_EVENTS = [
-  { id: 'd1', event_type: 'multiple_persons', severity: 'high', timestamp: new Date(Date.now() - 600000).toISOString(), reviewed: false, assessment_attempts: { students: { profiles: { full_name: 'Priya Mehta' } }, assessments: { title: 'Aptitude Test' } } },
-  { id: 'd2', event_type: 'tab_switch', severity: 'medium', timestamp: new Date(Date.now() - 3600000).toISOString(), reviewed: false, assessment_attempts: { students: { profiles: { full_name: 'Rohan Gupta' } }, assessments: { title: 'Programming Assessment' } } },
-  { id: 'd3', event_type: 'no_face', severity: 'medium', timestamp: new Date(Date.now() - 7200000).toISOString(), reviewed: true, review_note: 'Student briefly left seat. Cleared.', assessment_attempts: { students: { profiles: { full_name: 'Sneha Patel' } }, assessments: { title: 'Aptitude Test' } } },
-]
+const DEMO_EVENTS = DEMO_PROCTORING_EVENTS.map(e => ({
+  id: e.id,
+  event_type: e.eventType,
+  severity: e.severity,
+  timestamp: new Date(e.time).toISOString(),
+  reviewed: e.reviewed,
+  review_note: e.note,
+  assessment_attempts: {
+    students: { profiles: { full_name: e.student } },
+    assessments: { title: e.assessment },
+  },
+}))
 
 export function ProctoringReview() {
   const qc = useQueryClient()
