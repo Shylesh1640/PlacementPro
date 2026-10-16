@@ -5,15 +5,20 @@ export async function signIn(email: string, password: string, role: UserRole) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
   if (error) throw error
 
+  // Try profiles table (available after migrations are run)
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', data.user.id)
     .single<{ role: string }>()
 
-  if (profile?.role !== role) {
+  // Fall back to user_metadata stored in the JWT (works before migrations too)
+  const effectiveRole: string =
+    profile?.role ?? data.user.user_metadata?.role ?? 'student'
+
+  if (effectiveRole !== role) {
     await supabase.auth.signOut()
-    throw new Error(`This account is not registered as ${role}`)
+    throw new Error(`This account is not registered as ${role}. It is a ${effectiveRole} account.`)
   }
 
   return data
