@@ -1,13 +1,8 @@
 import { useState } from 'react'
-import { Search, Filter, Download, Eye } from 'lucide-react'
-
-const STUDENTS = [
-  { id: '1', name: 'Rahul Sharma', department: 'Computer Science', cgpa: 8.5, readiness: 92.5, status: 'placement_ready', proctoring: 'normal', applied: 3 },
-  { id: '2', name: 'Priya Mehta', department: 'Information Technology', cgpa: 7.8, readiness: 75.0, status: 'needs_improvement', proctoring: 'review_required', applied: 1 },
-  { id: '3', name: 'Arjun Nair', department: 'Electronics', cgpa: 9.1, readiness: 88.0, status: 'placement_ready', proctoring: 'normal', applied: 4 },
-  { id: '4', name: 'Sneha Patel', department: 'Computer Science', cgpa: 6.5, readiness: 55.0, status: 'at_risk', proctoring: 'flagged', applied: 0 },
-  { id: '5', name: 'Karthik R', department: 'Mechanical', cgpa: 7.2, readiness: 68.0, status: 'needs_improvement', proctoring: 'normal', applied: 2 },
-]
+import { useQuery } from '@tanstack/react-query'
+import { Search, Download, Eye } from 'lucide-react'
+import { getAllStudentsAdmin } from '../../lib/queries'
+import { Modal } from '../../components/ui/Modal'
 
 const statusConfig: Record<string, { label: string; bg: string; color: string }> = {
   placement_ready: { label: 'Ready', bg: '#DCFCE7', color: '#16A34A' },
@@ -21,24 +16,87 @@ const proctoringConfig: Record<string, { label: string; bg: string; color: strin
   flagged: { label: 'Flagged', bg: '#FEE2E2', color: '#EF4444' },
 }
 
+const DEMO_STUDENTS = [
+  { id: 'd1', profiles: { full_name: 'Rahul Sharma', email: 'rahul.sharma@student.placementpro.dev' }, department: 'Computer Science', cgpa: 8.5, tenth_percent: 92, twelfth_percent: 88, backlogs: 0, readiness_scores: [{ total_score: 92.5, status: 'placement_ready' }], proctoring_status: 'normal', placement_status: 'matched' },
+  { id: 'd2', profiles: { full_name: 'Priya Mehta', email: 'priya.mehta@student.placementpro.dev' }, department: 'Information Technology', cgpa: 7.8, tenth_percent: 85, twelfth_percent: 82, backlogs: 1, readiness_scores: [{ total_score: 75.0, status: 'needs_improvement' }], proctoring_status: 'review_required', placement_status: 'pending' },
+  { id: 'd3', profiles: { full_name: 'Arjun Nair', email: 'arjun.nair@student.placementpro.dev' }, department: 'Electronics', cgpa: 9.1, tenth_percent: 95, twelfth_percent: 93, backlogs: 0, readiness_scores: [{ total_score: 88.0, status: 'placement_ready' }], proctoring_status: 'normal', placement_status: 'interview_scheduled' },
+  { id: 'd4', profiles: { full_name: 'Sneha Patel', email: 'sneha.patel@student.placementpro.dev' }, department: 'Computer Science', cgpa: 6.5, tenth_percent: 78, twelfth_percent: 74, backlogs: 2, readiness_scores: [{ total_score: 55.0, status: 'at_risk' }], proctoring_status: 'flagged', placement_status: 'pending' },
+  { id: 'd5', profiles: { full_name: 'Meera Iyer', email: 'meera.iyer@student.placementpro.dev' }, department: 'Information Technology', cgpa: 9.3, tenth_percent: 97, twelfth_percent: 94, backlogs: 0, readiness_scores: [{ total_score: 95.0, status: 'placement_ready' }], proctoring_status: 'normal', placement_status: 'placed' },
+]
+
 export function AdminStudents() {
   const [search, setSearch] = useState('')
+  const [selected, setSelected] = useState<any | null>(null)
+  const [statusFilter, setStatusFilter] = useState('all')
 
-  const filtered = STUDENTS.filter(s =>
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
-    s.department.toLowerCase().includes(search.toLowerCase())
-  )
+  const { data: students = [], isLoading } = useQuery({
+    queryKey: ['allStudents'],
+    queryFn: getAllStudentsAdmin,
+    refetchInterval: 60000,
+  })
+
+  const displayStudents = students.length > 0 ? students : DEMO_STUDENTS
+
+  const filtered = displayStudents.filter((s: any) => {
+    const name = s.profiles?.full_name ?? ''
+    const dept = s.department ?? ''
+    const matchSearch =
+      name.toLowerCase().includes(search.toLowerCase()) ||
+      dept.toLowerCase().includes(search.toLowerCase())
+    const statusMatch =
+      statusFilter === 'all' ||
+      s.readiness_scores?.[0]?.status === statusFilter ||
+      s.proctoring_status === statusFilter
+    return matchSearch && statusMatch
+  })
+
+  const exportCSV = () => {
+    const rows = [
+      ['Name', 'Email', 'Department', 'CGPA', 'Readiness Score', 'Readiness Status', 'Proctoring'],
+      ...displayStudents.map((s: any) => [
+        s.profiles?.full_name ?? '',
+        s.profiles?.email ?? '',
+        s.department ?? '',
+        s.cgpa ?? '',
+        s.readiness_scores?.[0]?.total_score ?? '',
+        s.readiness_scores?.[0]?.status ?? '',
+        s.proctoring_status ?? '',
+      ]),
+    ]
+    const csv = rows.map(r => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'students.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold text-[#111827]">Students</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-[#111827]">Students</h1>
+          <p className="text-sm text-[#4B5563] mt-0.5">{filtered.length} students total</p>
+        </div>
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 text-sm font-medium text-[#4B5563] px-3 py-2 rounded-lg border border-[#E6E8F5] hover:bg-gray-50">
-            <Filter size={15} /> Filter
-          </button>
-          <button className="flex items-center gap-2 text-sm font-medium text-[#4B5563] px-3 py-2 rounded-lg border border-[#E6E8F5] hover:bg-gray-50">
-            <Download size={15} /> Export
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            className="text-sm border border-[#E6E8F5] rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+          >
+            <option value="all">All Statuses</option>
+            <option value="placement_ready">Placement Ready</option>
+            <option value="needs_improvement">Needs Improvement</option>
+            <option value="at_risk">At Risk</option>
+            <option value="flagged">Flagged</option>
+          </select>
+          <button
+            onClick={exportCSV}
+            className="flex items-center gap-2 text-sm font-medium text-[#4B5563] px-3 py-2 rounded-lg border border-[#E6E8F5] hover:bg-gray-50 transition-colors"
+          >
+            <Download size={15} /> Export CSV
           </button>
         </div>
       </div>
@@ -48,65 +106,122 @@ export function AdminStudents() {
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Search students…"
+          placeholder="Search by name or department…"
           className="w-full pl-9 pr-4 py-2 text-sm border border-[#E6E8F5] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
         />
       </div>
 
-      <div className="bg-white rounded-[12px] border border-[#E6E8F5] shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-[#E6E8F5] bg-gray-50/50">
-              <th className="text-left px-5 py-3 text-xs font-semibold text-[#9CA3AF] uppercase tracking-wide">Student</th>
-              <th className="text-left px-5 py-3 text-xs font-semibold text-[#9CA3AF] uppercase tracking-wide">Department</th>
-              <th className="text-left px-5 py-3 text-xs font-semibold text-[#9CA3AF] uppercase tracking-wide">CGPA</th>
-              <th className="text-left px-5 py-3 text-xs font-semibold text-[#9CA3AF] uppercase tracking-wide">Readiness</th>
-              <th className="text-left px-5 py-3 text-xs font-semibold text-[#9CA3AF] uppercase tracking-wide">Status</th>
-              <th className="text-left px-5 py-3 text-xs font-semibold text-[#9CA3AF] uppercase tracking-wide">Proctoring</th>
-              <th className="text-left px-5 py-3 text-xs font-semibold text-[#9CA3AF] uppercase tracking-wide">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#F3F4F6]">
-            {filtered.map(s => {
-              const sc = statusConfig[s.status]
-              const pc = proctoringConfig[s.proctoring]
-              return (
-                <tr key={s.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ background: '#4F46E5' }}>
-                        {s.name[0]}
-                      </div>
-                      <span className="font-medium text-[#111827]">{s.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5 text-[#4B5563]">{s.department}</td>
-                  <td className="px-5 py-3.5 font-semibold text-[#111827]">{s.cgpa}</td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-24 bg-gray-100 rounded-full h-1.5">
-                        <div className="h-1.5 rounded-full" style={{ width: `${s.readiness}%`, background: '#4F46E5' }} />
-                      </div>
-                      <span className="text-xs font-medium text-[#111827]">{s.readiness}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: pc.bg, color: pc.color }}>{pc.label}</span>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <button className="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-[#E6E8F5] text-[#4B5563] hover:bg-gray-50">
-                      <Eye size={13} /> View
-                    </button>
-                  </td>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-40">
+          <div className="animate-spin w-8 h-8 border-4 border-[#4F46E5] border-t-transparent rounded-full" />
+        </div>
+      ) : (
+        <div className="bg-white rounded-[12px] border border-[#E6E8F5] shadow-sm overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#E6E8F5] bg-gray-50/50">
+                {['Student', 'Department', 'CGPA', 'Readiness', 'Status', 'Proctoring', ''].map(h => (
+                  <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-[#9CA3AF] uppercase tracking-wide">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#F3F4F6]">
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-8 text-[#9CA3AF]">No students found.</td>
                 </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+              ) : filtered.map((s: any) => {
+                const rscore = s.readiness_scores?.[0]
+                const sc = statusConfig[rscore?.status ?? ''] ?? { label: 'Unknown', bg: '#F3F4F6', color: '#9CA3AF' }
+                const pc = proctoringConfig[s.proctoring_status ?? 'normal'] ?? proctoringConfig.normal
+                return (
+                  <tr key={s.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                          style={{ background: '#4F46E5' }}
+                        >
+                          {(s.profiles?.full_name ?? 'S')[0]}
+                        </div>
+                        <div>
+                          <div className="font-medium text-[#111827]">{s.profiles?.full_name ?? 'Student'}</div>
+                          <div className="text-xs text-[#9CA3AF]">{s.profiles?.email ?? ''}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5 text-[#4B5563]">{s.department || '—'}</td>
+                    <td className="px-5 py-3.5 font-semibold text-[#111827]">{s.cgpa || '—'}</td>
+                    <td className="px-5 py-3.5">
+                      {rscore ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-20 bg-gray-100 rounded-full h-1.5">
+                            <div
+                              className="h-1.5 rounded-full"
+                              style={{ width: `${Math.min(100, rscore.total_score)}%`, background: '#4F46E5' }}
+                            />
+                          </div>
+                          <span className="text-xs font-medium text-[#111827]">{Math.round(rscore.total_score)}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-[#9CA3AF]">Not assessed</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: pc.bg, color: pc.color }}>{pc.label}</span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <button
+                        onClick={() => setSelected(s)}
+                        className="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-[#E6E8F5] text-[#4B5563] hover:bg-gray-50 transition-colors"
+                      >
+                        <Eye size={13} /> View
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <Modal open={!!selected} onClose={() => setSelected(null)} title="Student Details" size="lg">
+        {selected && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold text-white"
+                style={{ background: '#4F46E5' }}
+              >
+                {(selected.profiles?.full_name ?? 'S')[0]}
+              </div>
+              <div>
+                <h3 className="font-semibold text-[#111827]">{selected.profiles?.full_name}</h3>
+                <p className="text-sm text-[#9CA3AF]">{selected.profiles?.email}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: 'Department', value: selected.department || '—' },
+                { label: 'CGPA', value: selected.cgpa || '—' },
+                { label: 'Backlogs', value: selected.backlogs ?? 0 },
+                { label: 'Placement Status', value: selected.placement_status?.replace(/_/g, ' ') || '—' },
+                { label: '10th %', value: selected.tenth_percent || '—' },
+                { label: '12th %', value: selected.twelfth_percent || '—' },
+              ].map(f => (
+                <div key={f.label} className="p-3 rounded-xl bg-gray-50 border border-[#E6E8F5]">
+                  <p className="text-xs text-[#9CA3AF] font-medium">{f.label}</p>
+                  <p className="text-sm font-semibold text-[#111827] mt-0.5 capitalize">{String(f.value)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

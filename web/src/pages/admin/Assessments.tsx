@@ -1,17 +1,68 @@
 import { useState } from 'react'
-import { Plus, Edit, Trash2, ToggleLeft, ToggleRight } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Plus, Trash2, ToggleLeft, ToggleRight, Users } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
+import { Select } from '../../components/ui/Select'
+import { getAllAssessmentsAdmin, createAssessment, toggleAssessmentActive, deleteAssessment } from '../../lib/queries'
+import { supabase } from '../../lib/supabase'
 
-const ASSESSMENTS = [
-  { id: '1', title: 'Aptitude Test – Quantitative Section', category: 'aptitude', duration: 60, totalMarks: 100, isActive: true, attempts: 245 },
-  { id: '2', title: 'Programming Skills Assessment', category: 'programming', duration: 90, totalMarks: 100, isActive: true, attempts: 238 },
-  { id: '3', title: 'Communication Skills Assessment', category: 'communication', duration: 60, totalMarks: 100, isActive: true, attempts: 240 },
-]
+const categoryConfig: Record<string, { bg: string; color: string }> = {
+  aptitude: { bg: '#EEF0FF', color: '#4F46E5' },
+  programming: { bg: '#F3E8FF', color: '#7C3AED' },
+  communication: { bg: '#DCFCE7', color: '#16A34A' },
+}
 
 export function AdminAssessments() {
+  const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    category: 'aptitude',
+    duration_minutes: 60,
+    total_marks: 100,
+    pass_marks: 40,
+  })
+
+  const { data: assessments = [], isLoading } = useQuery({
+    queryKey: ['adminAssessments'],
+    queryFn: getAllAssessmentsAdmin,
+  })
+
+  const { data: attemptCounts = {} } = useQuery({
+    queryKey: ['attemptCounts'],
+    queryFn: async () => {
+      const { data } = await supabase.from('assessment_attempts').select('assessment_id')
+      if (!data) return {}
+      const counts: Record<string, number> = {}
+      data.forEach((r: any) => {
+        counts[r.assessment_id] = (counts[r.assessment_id] ?? 0) + 1
+      })
+      return counts
+    },
+  })
+
+  const createMutation = useMutation({
+    mutationFn: () => createAssessment({ ...form }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['adminAssessments'] })
+      setShowCreate(false)
+      setForm({ title: '', description: '', category: 'aptitude', duration_minutes: 60, total_marks: 100, pass_marks: 40 })
+    },
+  })
+
+  const toggleMutation = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      toggleAssessmentActive(id, isActive),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['adminAssessments'] }),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteAssessment(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['adminAssessments'] }),
+  })
 
   return (
     <div className="space-y-6">
@@ -26,54 +77,133 @@ export function AdminAssessments() {
         </button>
       </div>
 
-      <div className="space-y-4">
-        {ASSESSMENTS.map(a => (
-          <div key={a.id} className="bg-white rounded-[12px] border border-[#E6E8F5] shadow-sm p-5 flex items-center gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-sm font-semibold text-[#111827]">{a.title}</h3>
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full font-medium capitalize"
-                  style={{
-                    background: a.category === 'aptitude' ? '#EEF0FF' : a.category === 'programming' ? '#F3E8FF' : '#DCFCE7',
-                    color: a.category === 'aptitude' ? '#4F46E5' : a.category === 'programming' ? '#7C3AED' : '#16A34A',
-                  }}
-                >
-                  {a.category}
-                </span>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-40">
+          <div className="animate-spin w-8 h-8 border-4 border-[#4F46E5] border-t-transparent rounded-full" />
+        </div>
+      ) : assessments.length === 0 ? (
+        <div className="bg-white rounded-[12px] border border-[#E6E8F5] shadow-sm p-12 text-center">
+          <p className="text-[#9CA3AF] mb-4">
+            No assessments yet. Create one or run the seed migrations.
+          </p>
+          <button
+            onClick={() => setShowCreate(true)}
+            className="text-sm font-medium px-4 py-2 rounded-lg text-white"
+            style={{ background: '#4F46E5' }}
+          >
+            <Plus size={14} className="inline mr-1" /> Create Assessment
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {assessments.map((a: any) => {
+            const cc = categoryConfig[a.category] ?? categoryConfig.aptitude
+            return (
+              <div
+                key={a.id}
+                className="bg-white rounded-[12px] border border-[#E6E8F5] shadow-sm p-5 flex items-center gap-4"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <h3 className="text-sm font-semibold text-[#111827]">{a.title}</h3>
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full font-medium capitalize"
+                      style={{ background: cc.bg, color: cc.color }}
+                    >
+                      {a.category}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-[#9CA3AF] flex-wrap">
+                    <span>{a.duration_minutes} min</span>
+                    <span>{a.total_marks} marks</span>
+                    <span className="flex items-center gap-1">
+                      <Users size={11} /> {(attemptCounts as Record<string,number>)[a.id] ?? 0} attempts
+                    </span>
+                    <span>{a.is_active ? '🟢 Active' : '🔴 Inactive'}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => deleteMutation.mutate(a.id)}
+                    disabled={deleteMutation.isPending}
+                    className="p-2 rounded-lg border border-[#E6E8F5] text-[#4B5563] hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors disabled:opacity-50"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                  <button
+                    onClick={() => toggleMutation.mutate({ id: a.id, isActive: !a.is_active })}
+                    disabled={toggleMutation.isPending}
+                  >
+                    {a.is_active ? (
+                      <ToggleRight size={26} style={{ color: '#16A34A' }} className="cursor-pointer" />
+                    ) : (
+                      <ToggleLeft size={26} className="text-gray-300 cursor-pointer" />
+                    )}
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-4 text-xs text-[#9CA3AF]">
-                <span>{a.duration} min</span>
-                <span>{a.totalMarks} marks</span>
-                <span>{a.attempts} attempts</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <button className="p-2 rounded-lg border border-[#E6E8F5] text-[#4B5563] hover:bg-gray-50">
-                <Edit size={15} />
-              </button>
-              <button className="p-2 rounded-lg border border-[#E6E8F5] text-[#4B5563] hover:bg-red-50 hover:text-red-500 hover:border-red-200">
-                <Trash2 size={15} />
-              </button>
-              {a.isActive
-                ? <ToggleRight size={24} style={{ color: '#16A34A' }} className="cursor-pointer" />
-                : <ToggleLeft size={24} className="text-gray-300 cursor-pointer" />
-              }
-            </div>
-          </div>
-        ))}
-      </div>
+            )
+          })}
+        </div>
+      )}
 
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Create Assessment">
         <div className="space-y-4">
-          <Input label="Assessment Title" placeholder="e.g. Aptitude Test – Quantitative Section" required />
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Duration (minutes)" type="number" defaultValue="60" />
-            <Input label="Total Marks" type="number" defaultValue="100" />
+          <Input
+            label="Assessment Title"
+            value={form.title}
+            onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
+            placeholder="e.g. Aptitude Test – Quantitative Section"
+            required
+          />
+          <Input
+            label="Description"
+            value={form.description}
+            onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+            placeholder="Optional description"
+          />
+          <Select
+            label="Category"
+            value={form.category}
+            onChange={e => setForm(p => ({ ...p, category: e.target.value }))}
+            options={[
+              { value: 'aptitude', label: 'Aptitude' },
+              { value: 'programming', label: 'Programming' },
+              { value: 'communication', label: 'Communication' },
+            ]}
+          />
+          <div className="grid grid-cols-3 gap-4">
+            <Input
+              label="Duration (min)"
+              type="number"
+              value={String(form.duration_minutes)}
+              onChange={e => setForm(p => ({ ...p, duration_minutes: Number(e.target.value) }))}
+            />
+            <Input
+              label="Total Marks"
+              type="number"
+              value={String(form.total_marks)}
+              onChange={e => setForm(p => ({ ...p, total_marks: Number(e.target.value) }))}
+            />
+            <Input
+              label="Pass Marks"
+              type="number"
+              value={String(form.pass_marks)}
+              onChange={e => setForm(p => ({ ...p, pass_marks: Number(e.target.value) }))}
+            />
           </div>
-          <div className="flex gap-3 justify-end mt-2">
+          {createMutation.error && (
+            <p className="text-sm text-red-600">{(createMutation.error as Error).message}</p>
+          )}
+          <div className="flex gap-3 justify-end">
             <Button variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button>Create</Button>
+            <Button
+              onClick={() => createMutation.mutate()}
+              loading={createMutation.isPending}
+              disabled={!form.title}
+            >
+              Create
+            </Button>
           </div>
         </div>
       </Modal>
