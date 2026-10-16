@@ -15,8 +15,7 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 })
 
-/** Build a Profile from the Supabase auth user's JWT metadata.
- *  Used as a fallback when the profiles table doesn't exist yet (pre-migration). */
+/** Build a Profile from JWT metadata — works before migrations are run. */
 function profileFromAuthUser(authUser: User): Profile {
   const meta = authUser.user_metadata ?? {}
   return {
@@ -30,23 +29,25 @@ function profileFromAuthUser(authUser: User): Profile {
   }
 }
 
-/** Loads the profile: DB row if the table exists, otherwise JWT metadata. */
+/**
+ * Load profile from DB if table exists; fall back to JWT metadata on any error.
+ * This handles: table missing (404/42P01), row missing (PGRST116), network issues.
+ */
 async function loadProfile(authUser: User): Promise<Profile> {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', authUser.id)
-    .single()
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authUser.id)
+      .single()
 
-  // Table exists and row found
-  if (data) return data as Profile
+    if (data && !error) return data as Profile
 
-  // Table missing (code 42P01) or row missing (code PGRST116) — use JWT metadata
-  if (error?.code === '42P01' || error?.code === 'PGRST116' || !data) {
+    // Any error (table missing = 404, row missing = PGRST116, etc.) → use JWT
+    return profileFromAuthUser(authUser)
+  } catch {
     return profileFromAuthUser(authUser)
   }
-
-  return profileFromAuthUser(authUser)
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -54,24 +55,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Load session on mount
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        const profile = await loadProfile(session.user)
-        setUser(profile)
-      }
-      setLoading(false)
-    })
-
-    // Listen for auth state changes (login / logout)
+    /**
+     * Use onAuthStateChange as the single source of truth.
+     * It fires immediately for the current session (INITIAL_SESSION event)
+     * so we don't need a separate getSession() call.
+     *
+     * IMPORTANT: setLoading(true) is called SYNCHRONOUSLY before the async
+     * loadProfile() so RoleGuard shows a spinner (never sees user=null
+     * mid-flight and bounces to /login).
+     */
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        // Set loading true synchronously so RoleGuard waits
+        setLoading(true)
+
         if (session?.user) {
           const profile = await loadProfile(session.user)
           setUser(profile)
         } else {
           setUser(null)
         }
+
         setLoading(false)
       }
     )
@@ -80,8 +84,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signOut = async () => {
+    setLoading(true)
     await supabase.auth.signOut()
     setUser(null)
+    setLoading(false)
   }
 
   return (

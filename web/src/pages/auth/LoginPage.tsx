@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { GraduationCap, Users, Building2, ChevronRight, ArrowLeft, Briefcase } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { signIn } from '../../lib/auth'
+import { useAuth } from '../../contexts/AuthContext'
 import type { UserRole } from '../../types/database'
 
 const ROLES = [
@@ -32,13 +33,27 @@ const ROLES = [
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const { user, loading: authLoading } = useAuth()
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  // Set after a successful signIn call — tells the effect below where to go
+  const [pendingRedirect, setPendingRedirect] = useState<string | null>(null)
 
   const selectedRoleData = ROLES.find(r => r.key === selectedRole)
+
+  /**
+   * Navigate only once the AuthContext has finished loading the user.
+   * This avoids the race condition where navigate() fires before
+   * onAuthStateChange updates user, causing RoleGuard to bounce back to /login.
+   */
+  useEffect(() => {
+    if (pendingRedirect && !authLoading && user) {
+      navigate(pendingRedirect, { replace: true })
+    }
+  }, [pendingRedirect, authLoading, user, navigate])
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,12 +62,13 @@ export function LoginPage() {
     setError('')
     try {
       await signIn(email, password, selectedRole)
-      navigate(selectedRoleData?.redirect ?? '/student/dashboard')
+      // Store destination — the effect above will navigate once user is ready
+      setPendingRedirect(selectedRoleData?.redirect ?? '/student/dashboard')
     } catch (err: any) {
       setError(err.message ?? 'Sign in failed. Please try again.')
-    } finally {
       setLoading(false)
     }
+    // Don't call setLoading(false) on success — keep spinner until navigation fires
   }
 
   return (
