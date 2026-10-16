@@ -16,6 +16,8 @@ export function StudentProfile() {
   const [newSkill, setNewSkill] = useState('')
   const [saved, setSaved] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [parsing, setParsing] = useState(false)
+  const [parsedFields, setParsedFields] = useState<string[]>([])
   const [synced, setSynced] = useState(false)
   const [form, setForm] = useState({
     student_id: '',
@@ -101,6 +103,69 @@ export function StudentProfile() {
     }
   }
 
+  const handleParseResume = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !student) return
+
+    // Upload first
+    setUploading(true)
+    try {
+      const path = `${student.id}/${file.name}`
+      const { data: urlData } = await supabase.storage.from('resumes').upload(path, file, { upsert: true })
+        .then(async () => {
+          return { data: supabase.storage.from('resumes').getPublicUrl(path).data }
+        })
+      if (urlData?.publicUrl) {
+        await updateStudent(student.id, { resume_url: urlData.publicUrl })
+        qc.invalidateQueries({ queryKey: ['student', user?.id] })
+      }
+    } catch { /* upload failure is non-blocking */ }
+    finally { setUploading(false) }
+
+    // Parse with AI
+    setParsing(true)
+    setParsedFields([])
+    try {
+      const text = await file.text().catch(() => '')
+      if (!text.trim()) { setParsing(false); return }
+
+      const aiUrl = (import.meta.env.VITE_AI_SERVICE_URL as string) ?? 'http://localhost:8000'
+      const res = await fetch(`${aiUrl}/api/parse-resume`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resume_text: text, filename: file.name }),
+        signal: AbortSignal.timeout(15000),
+      })
+      if (!res.ok) throw new Error(`Parse failed: ${res.status}`)
+      const parsed = await res.json()
+
+      const filled: string[] = []
+      setForm(prev => {
+        const u = { ...prev }
+        if (parsed.department && !prev.department) { u.department = parsed.department; filled.push('Department') }
+        if (parsed.cgpa)            { u.cgpa = String(parsed.cgpa);                    filled.push('CGPA') }
+        if (parsed.tenth_percent)   { u.tenth_percent = String(parsed.tenth_percent);  filled.push('10th %') }
+        if (parsed.twelfth_percent) { u.twelfth_percent = String(parsed.twelfth_percent); filled.push('12th %') }
+        if (parsed.phone && !prev.contact_phone) { u.contact_phone = parsed.phone;    filled.push('Phone') }
+        return u
+      })
+      setSynced(false)
+
+      if (parsed.skills?.length > 0) {
+        for (const sk of (parsed.skills as string[]).slice(0, 15)) {
+          await upsertStudentSkill(student.id, sk).catch(() => {})
+        }
+        qc.invalidateQueries({ queryKey: ['skills', student?.id] })
+        filled.push('Skills')
+      }
+      setParsedFields(filled)
+    } catch {
+      // AI offline — upload already succeeded
+    } finally {
+      setParsing(false)
+    }
+  }
+
   const fields = [
     { label: 'Full Name', readonly: true, value: user?.full_name ?? '', placeholder: 'Your full name' },
     { label: 'Student ID', key: 'student_id', placeholder: 'e.g. CS2021001' },
@@ -136,6 +201,36 @@ export function StudentProfile() {
             <Upload size={13} /> {uploading ? 'Uploading…' : 'Upload Resume'}
             <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={handleUploadResume} />
           </label>
+
+          {parsedFields.length > 0 && (
+            <div className="mt-3 p-3 rounded-lg border border-[#A7F3D0] text-xs" style={{ background: '#F0FFF4' }}>
+              <p className="font-medium" style={{ color: '#16A34A' }}>
+                ✓ Auto-filled from resume: {parsedFields.join(', ')}
+              </p>
+              <p className="text-[#4B5563] mt-0.5">Review the values and click Save Profile.</p>
+            </div>
+          )}
+
+          <label
+            className="mt-3 flex items-center justify-center gap-2 text-xs font-medium px-3 py-2 rounded-lg cursor-pointer transition-colors"
+            style={{ background: parsing ? '#9CA3AF' : '#4F46E5', color: 'white', opacity: parsing ? 0.7 : 1 }}
+          >
+            {parsing ? (
+              <><div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full" /> Parsing with AI…</>
+            ) : (
+              <><Upload size={13} /> Upload &amp; Parse Resume with AI</>
+            )}
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,.txt"
+              className="hidden"
+              onChange={handleParseResume}
+              disabled={parsing || !student}
+            />
+          </label>
+          <p className="text-[10px] text-[#9CA3AF] text-center mt-1">
+            Uses Groq AI (free) to auto-fill your profile fields
+          </p>
         </div>
 
         <div className="lg:col-span-2 space-y-4">

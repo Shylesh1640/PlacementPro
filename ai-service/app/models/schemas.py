@@ -78,3 +78,43 @@ class ProctoringEvent(BaseModel):
     event_type: str
     timestamp: str
     severity: str
+
+
+class ResumeParseRequest(BaseModel):
+    resume_text: str
+    filename: Optional[str] = None
+
+
+class ResumeParseResult(BaseModel):
+    full_name: str = ""
+    email: str = ""
+    phone: str = ""
+    department: str = ""
+    cgpa: Optional[float] = None
+    tenth_percent: Optional[float] = None
+    twelfth_percent: Optional[float] = None
+    skills: List[str] = []
+    projects: List[dict] = []
+    internships: List[dict] = []
+    certifications: List[dict] = []
+    summary: str = ""
+    parsed_by_ai: bool = False
+
+
+class JobParseRequest(BaseModel):
+    jd_text: str
+
+
+class JobParseResult(BaseModel):
+    title: str = ""
+    company: str = ""
+    description: str = ""
+    required_skills: List[str] = []
+    preferred_skills: List[str] = []
+    min_cgpa: Optional[float] = None
+    max_backlogs: Optional[int] = None
+    location: str = ""
+    work_mode: str = "on-site"
+    experience_level: str = "fresher"
+    employment_type: str = "full-time"
+    parsed_by_ai: bool = False

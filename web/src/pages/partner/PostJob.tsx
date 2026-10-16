@@ -23,12 +23,42 @@ export function PostJob() {
   const [skills, setSkills] = useState<string[]>(['Python', 'ML'])
   const [newSkill, setNewSkill] = useState('')
   const [saved, setSaved] = useState(false)
+  const [parsingJD, setParsingJD] = useState(false)
+  const [jdParsed, setJdParsed] = useState(false)
 
   const { data: company, isLoading: companyLoading } = useQuery({
     queryKey: ['company', user?.id],
     queryFn: () => getCompanyByProfileId(user!.id),
     enabled: !!user?.id,
   })
+
+  const handleParseJD = async () => {
+    if (!description.trim()) return
+    setParsingJD(true)
+    setJdParsed(false)
+    try {
+      const aiUrl = (import.meta.env.VITE_AI_SERVICE_URL as string) ?? 'http://localhost:8000'
+      const res = await fetch(`${aiUrl}/api/parse-job`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jd_text: description }),
+        signal: AbortSignal.timeout(15000),
+      })
+      if (!res.ok) throw new Error('Parse failed')
+      const parsed = await res.json()
+      if (parsed.title)                    setTitle(parsed.title)
+      if (parsed.required_skills?.length)  setSkills((parsed.required_skills as string[]).slice(0, 10))
+      if (parsed.min_cgpa)                 setMinCgpa(String(parsed.min_cgpa))
+      if (parsed.location)                 setLocation(parsed.location)
+      if (parsed.work_mode)                setWorkMode(parsed.work_mode)
+      if (parsed.experience_level)         setExperienceLevel(parsed.experience_level)
+      setJdParsed(true)
+    } catch {
+      // AI offline — silent fail
+    } finally {
+      setParsingJD(false)
+    }
+  }
 
   const addSkill = (s?: string) => {
     const skill = s ?? newSkill.trim()
@@ -107,8 +137,28 @@ export function PostJob() {
         <div className="bg-white rounded-[12px] border border-[#E6E8F5] shadow-sm p-6 space-y-4">
           <h3 className="text-base font-semibold text-[#111827]">Job Details</h3>
           <Input label="Job Title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g., Software Development Engineer" required />
-          <Textarea label="Job Description" value={description} onChange={e => setDescription(e.target.value)}
-            placeholder="Describe the role, required skills and responsibilities…" rows={5} required />
+          <Textarea label="Job Description" value={description} onChange={e => { setDescription(e.target.value); setJdParsed(false) }}
+            placeholder="Paste the full job description here, then click ✨ to auto-fill requirements…" rows={5} required />
+          <div className="space-y-1">
+            <button
+              type="button"
+              onClick={handleParseJD}
+              disabled={parsingJD || !description.trim()}
+              className="flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-lg border border-[#C7D2FE] disabled:opacity-50 transition-colors w-full justify-center"
+              style={{ background: '#EEF0FF', color: '#4F46E5' }}
+            >
+              {parsingJD ? (
+                <><div className="animate-spin w-3 h-3 border-2 border-indigo-500 border-t-transparent rounded-full" /> Analyzing JD with AI…</>
+              ) : (
+                <>✨ Parse JD with AI — auto-fill requirements</>
+              )}
+            </button>
+            {jdParsed && (
+              <p className="text-xs font-medium text-center" style={{ color: '#16A34A' }}>
+                ✓ Requirements auto-filled — review and adjust as needed
+              </p>
+            )}
+          </div>
           {saved && (
             <div className="flex items-center gap-2 p-3 rounded-lg" style={{ background: '#DCFCE7' }}>
               <CheckCircle size={16} style={{ color: '#16A34A' }} />

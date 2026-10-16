@@ -8,3 +8,4 @@ httpx==0.25.2
 python-dotenv==1.0.0
 pillow==10.1.0
 opencv-python-headless==4.8.1.78
+pypdf2==3.0.1
