@@ -13,3 +13,6 @@ venv/
 Thumbs.db
 *.log
 supabase/.env
+
+# Private credentials — never commit
+CREDENTIALS.md
