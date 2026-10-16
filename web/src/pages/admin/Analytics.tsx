@@ -4,7 +4,7 @@ import {
   PieChart, Pie, Cell, Legend, LineChart, Line
 } from 'recharts'
 import { getDepartmentStats, getPlacementChartData, getAdminStats } from '../../lib/queries'
-import { DEMO_DEPT_STATS, DEMO_CHART_DATA } from '../../lib/demo-data'
+import { DEMO_DEPT_STATS, DEMO_CHART_DATA, DEMO_ADMIN_STATS } from '../../lib/demo-data'
 
 const DEMO_DEPT  = DEMO_DEPT_STATS
 const DEMO_CHART = DEMO_CHART_DATA
@@ -51,10 +51,10 @@ export function AdminAnalytics() {
       {/* Summary stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Total Students', value: stats?.students ?? 1250, color: '#4F46E5', bg: '#EEF0FF' },
-          { label: 'Placed', value: placed || 465, color: '#16A34A', bg: '#DCFCE7' },
-          { label: 'Placement Rate', value: `${placementRate}%`, color: '#F59E0B', bg: '#FFF7ED' },
-          { label: 'Companies', value: stats?.companies ?? 120, color: '#3B82F6', bg: '#EFF6FF' },
+          { label: 'Total Students',  value: stats?.students  ?? DEMO_ADMIN_STATS.students,  color: '#4F46E5', bg: '#EEF0FF' },
+          { label: 'Placed',          value: placed || DEMO_ADMIN_STATS.placements,             color: '#16A34A', bg: '#DCFCE7' },
+          { label: 'Placement Rate',  value: `${placementRate}%`,                              color: '#F59E0B', bg: '#FFF7ED' },
+          { label: 'Companies',       value: stats?.companies ?? DEMO_ADMIN_STATS.companies,    color: '#3B82F6', bg: '#EFF6FF' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-[12px] border border-[#E6E8F5] shadow-sm p-4">
             <p className="text-xs text-[#9CA3AF] font-medium uppercase tracking-wide">{s.label}</p>
