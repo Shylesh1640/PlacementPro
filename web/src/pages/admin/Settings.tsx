@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Save, AlertCircle, CheckCircle } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
@@ -23,9 +23,11 @@ export function AdminSettings() {
   })
 
   const [localWeights, setLocalWeights] = useState<Record<string, number> | null>(null)
-  if (weights && !localWeights) {
-    setLocalWeights({ ...weights })
-  }
+  useEffect(() => {
+    if (weights && !localWeights) {
+      setLocalWeights({ ...(weights as Record<string, number>) })
+    }
+  }, [weights, localWeights])
 
   const currentWeights = localWeights ?? weights ?? {}
   const weightTotal = WEIGHT_KEYS.reduce((sum, w) => sum + (Number((currentWeights as any)[w.key]) || 0), 0)

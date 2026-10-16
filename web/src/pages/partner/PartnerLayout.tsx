@@ -12,5 +12,5 @@ const navItems = [
 ]
 
 export function PartnerLayout() {
-  return <AppLayout navItems={navItems} notificationCount={3} />
+  return <AppLayout navItems={navItems} />
 }

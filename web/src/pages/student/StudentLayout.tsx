@@ -17,5 +17,5 @@ const navItems = [
 ]
 
 export function StudentLayout() {
-  return <AppLayout navItems={navItems} notificationCount={2} />
+  return <AppLayout navItems={navItems} />
 }

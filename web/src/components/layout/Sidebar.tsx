@@ -1,4 +1,4 @@
-import React from 'react'
+import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { GraduationCap, LogOut } from 'lucide-react'
 import { cn } from '../../lib/utils'
@@ -7,7 +7,7 @@ import { useAuth } from '../../contexts/AuthContext'
 export interface NavItem {
   label: string
   path: string
-  icon: React.ReactNode
+  icon: ReactNode
 }
 
 interface SidebarProps {
@@ -29,6 +29,7 @@ export function Sidebar({ items }: SidebarProps) {
           <NavLink
             key={item.path}
             to={item.path}
+            end={false}
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3 px-4 py-2.5 text-sm transition-colors mx-2 rounded-lg mb-0.5',

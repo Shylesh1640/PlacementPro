@@ -1,11 +1,11 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Legend } from 'recharts'
 import { Target, CheckSquare, Briefcase, Calendar } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import {
   getStudentByProfileId, getStudentAttempts, getReadinessScore,
-  getSkillGaps, getJobMatches, getStudentInterviews
+  getSkillGaps, getJobMatches, getStudentInterviews, applyToJob
 } from '../../lib/queries'
 
 const DEMO_JOBS = [
@@ -24,6 +24,7 @@ const DEMO_SKILLS = [
 
 export function StudentDashboard() {
   const { user } = useAuth()
+  const qc = useQueryClient()
   const firstName = user?.full_name?.split(' ')[0] ?? 'Student'
 
   const { data: student } = useQuery({
@@ -73,6 +74,12 @@ export function StudentDashboard() {
         target: g.target_score,
       }))
     : DEMO_SKILLS
+
+  const applyMutation = useMutation({
+    mutationFn: ({ studentId, jobId }: { studentId: string; jobId: string }) =>
+      applyToJob(studentId, jobId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['applications', student?.id] }),
+  })
 
   const displayJobs = (jobMatchesRaw as any[]).length > 0
     ? (jobMatchesRaw as any[]).slice(0, 3).map(m => ({
@@ -146,13 +153,13 @@ export function StudentDashboard() {
                   <p className="text-xs font-medium mt-0.5" style={{ color: '#16A34A' }}>Match: {job.match}%</p>
                 </div>
                 <button
-                  onClick={async () => {
+                  onClick={() => {
                     if (student?.id && !['1','2','3'].includes(job.id)) {
-                      const { applyToJob } = await import('../../lib/queries')
-                      await applyToJob(student.id, job.id)
+                      applyMutation.mutate({ studentId: student.id, jobId: job.id })
                     }
                   }}
-                  className="text-xs font-medium px-3 py-1.5 rounded-lg text-white flex-shrink-0"
+                  disabled={applyMutation.isPending}
+                  className="text-xs font-medium px-3 py-1.5 rounded-lg text-white flex-shrink-0 disabled:opacity-60"
                   style={{ background: '#4F46E5' }}
                 >
                   Apply

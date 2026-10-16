@@ -20,5 +20,5 @@ const navItems = [
 ]
 
 export function AdminLayout() {
-  return <AppLayout navItems={navItems} notificationCount={5} />
+  return <AppLayout navItems={navItems} />
 }

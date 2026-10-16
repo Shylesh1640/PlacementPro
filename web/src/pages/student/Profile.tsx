@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Upload, Plus, Trash2, Save, CheckCircle } from 'lucide-react'
 import { Input } from '../../components/ui/Input'
@@ -39,18 +39,20 @@ export function StudentProfile() {
     enabled: !!student?.id,
   })
 
-  if (student && !synced) {
-    setForm({
-      student_id: student.student_id ?? '',
-      department: student.department ?? '',
-      cgpa: student.cgpa?.toString() ?? '',
-      tenth_percent: student.tenth_percent?.toString() ?? '',
-      twelfth_percent: student.twelfth_percent?.toString() ?? '',
-      backlogs: student.backlogs?.toString() ?? '0',
-      contact_phone: student.contact_phone ?? '',
-    })
-    setSynced(true)
-  }
+  useEffect(() => {
+    if (student && !synced) {
+      setForm({
+        student_id: student.student_id ?? '',
+        department: student.department ?? '',
+        cgpa: student.cgpa?.toString() ?? '',
+        tenth_percent: student.tenth_percent?.toString() ?? '',
+        twelfth_percent: student.twelfth_percent?.toString() ?? '',
+        backlogs: student.backlogs?.toString() ?? '0',
+        contact_phone: student.contact_phone ?? '',
+      })
+      setSynced(true)
+    }
+  }, [student, synced])
 
   const saveMutation = useMutation({
     mutationFn: () => updateStudent(student!.id, {
