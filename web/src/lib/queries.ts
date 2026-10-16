@@ -136,14 +136,20 @@ export async function getStudentInternships(studentId: string): Promise<any> {
 
 // ─── Assessments ──────────────────────────────────────────────────────────
 
-export async function getActiveAssessments(): Promise<any> {
+export async function getActiveAssessments(department?: string): Promise<any> {
   const { data, error } = await db
     .from('assessments')
     .select('*')
     .eq('is_active', true)
     .order('created_at')
   if (error && !tableMissing(error)) throw error
-  return data ?? []
+  const all = data ?? []
+  if (!department) return all
+  // Show if eligible_departments is empty (all depts) or includes this department
+  return all.filter((a: any) => {
+    const depts: string[] = a.eligible_departments ?? []
+    return depts.length === 0 || depts.includes(department)
+  })
 }
 
 export async function getStudentAttempts(studentId: string): Promise<any> {
@@ -424,10 +430,11 @@ export async function createAssessment(payload: {
   duration_minutes: number
   total_marks: number
   pass_marks: number
-}) {
+  eligible_departments?: string[]
+}): Promise<any> {
   const { data, error } = await db
     .from('assessments')
-    .insert(payload)
+    .insert({ ...payload, eligible_departments: payload.eligible_departments ?? [] })
     .select()
     .single()
   if (error) throw error
@@ -647,6 +654,28 @@ export async function reviewProctoringEvent(id: string, decision: 'clear' | 'fla
       }
     }
   }
+}
+
+export async function saveProctoringEvent(
+  attemptId: string,
+  eventType: string,
+  severity: 'high' | 'medium' | 'low',
+  snapshotUrl?: string
+): Promise<any> {
+  const { data, error } = await db
+    .from('proctoring_events')
+    .insert({
+      attempt_id:   attemptId,
+      event_type:   eventType,
+      severity,
+      snapshot_url: snapshotUrl ?? null,
+      timestamp:    new Date().toISOString(),
+      reviewed:     false,
+    })
+    .select()
+    .single()
+  if (error && !tableMissing(error)) throw error
+  return data
 }
 
 // ─── Analytics ────────────────────────────────────────────────────────────

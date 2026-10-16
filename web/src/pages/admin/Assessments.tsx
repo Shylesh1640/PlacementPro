@@ -14,9 +14,15 @@ const categoryConfig: Record<string, { bg: string; color: string }> = {
   communication: { bg: '#DCFCE7', color: '#16A34A' },
 }
 
+const DEPARTMENTS = [
+  'Computer Science', 'Information Technology', 'Electronics',
+  'Electrical Engineering', 'Mechanical', 'Civil', 'Chemical',
+]
+
 export function AdminAssessments() {
   const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
+  const [selectedDepts, setSelectedDepts] = useState<string[]>([])
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -45,10 +51,11 @@ export function AdminAssessments() {
   })
 
   const createMutation = useMutation({
-    mutationFn: () => createAssessment({ ...form }),
+    mutationFn: () => createAssessment({ ...form, eligible_departments: selectedDepts }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['adminAssessments'] })
       setShowCreate(false)
+      setSelectedDepts([])
       setForm({ title: '', description: '', category: 'aptitude', duration_minutes: 60, total_marks: 100, pass_marks: 40 })
     },
   })
@@ -120,6 +127,11 @@ export function AdminAssessments() {
                       <Users size={11} /> {(attemptCounts as Record<string,number>)[a.id] ?? 0} attempts
                     </span>
                     <span>{a.is_active ? '🟢 Active' : '🔴 Inactive'}</span>
+                    <span>
+                      {(a.eligible_departments ?? []).length === 0
+                        ? '🏫 All departments'
+                        : `🏫 ${(a.eligible_departments as string[]).join(', ')}`}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
@@ -192,6 +204,35 @@ export function AdminAssessments() {
               onChange={e => setForm(p => ({ ...p, pass_marks: Number(e.target.value) }))}
             />
           </div>
+          {/* Department eligibility */}
+          <div>
+            <label className="block text-xs font-medium text-[#4B5563] mb-2">
+              Eligible Departments{' '}
+              <span className="text-[#9CA3AF] font-normal">(leave empty for all departments)</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2 p-3 rounded-lg border border-[#E6E8F5] bg-gray-50/50">
+              {DEPARTMENTS.map(dept => (
+                <label key={dept} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedDepts.includes(dept)}
+                    onChange={e => {
+                      if (e.target.checked) setSelectedDepts(p => [...p, dept])
+                      else setSelectedDepts(p => p.filter(d => d !== dept))
+                    }}
+                    className="accent-[#4F46E5]"
+                  />
+                  <span className="text-sm text-[#4B5563]">{dept}</span>
+                </label>
+              ))}
+            </div>
+            {selectedDepts.length === 0 && (
+              <p className="text-xs text-[#9CA3AF] mt-1.5">
+                ✓ All departments will see this assessment
+              </p>
+            )}
+          </div>
+
           {createMutation.error && (
             <p className="text-sm text-red-600">{(createMutation.error as Error).message}</p>
           )}

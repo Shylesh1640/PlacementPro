@@ -33,6 +33,7 @@ import { AdminSettings } from './pages/admin/Settings'
 import { ProctoringReview } from './pages/admin/ProctoringReview'
 import { CompanyVerification } from './pages/admin/CompanyVerification'
 import { QuestionBank } from './pages/admin/QuestionBank'
+import { CreateStudent } from './pages/admin/CreateStudent'
 
 // Partner Layout + Pages
 import { PartnerLayout } from './pages/partner/PartnerLayout'
@@ -95,6 +96,7 @@ function App() {
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="students" element={<AdminStudents />} />
+              <Route path="create-student" element={<CreateStudent />} />
               <Route path="assessments" element={<AdminAssessments />} />
               <Route path="question-bank" element={<QuestionBank />} />
               <Route path="job-postings" element={<AdminJobPostings />} />

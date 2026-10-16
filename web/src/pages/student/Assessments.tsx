@@ -26,10 +26,12 @@ export function Assessments() {
     enabled: !!user?.id,
   })
 
-  const { data: assessments = [], isLoading: loadingA } = useQuery({
-    queryKey: ['assessments'],
-    queryFn: getActiveAssessments,
+  const { data: assessmentsRaw = [], isLoading: loadingA } = useQuery({
+    queryKey: ['assessments', student?.department],
+    queryFn: () => getActiveAssessments(student?.department),
+    // Run even before student loads — shows all until department known
   })
+  const assessments = assessmentsRaw as any[]
 
   const { data: attemptsRaw = [], isLoading: loadingAt } = useQuery({
     queryKey: ['attempts', student?.id],

@@ -2,12 +2,13 @@ import { AppLayout } from '../../components/layout/AppLayout'
 import {
   LayoutDashboard, Users, ClipboardList, Briefcase,
   Calendar, BarChart2, FileText, Settings, Shield,
-  Building2, BookOpen
+  Building2, BookOpen, UserPlus
 } from 'lucide-react'
 
 const navItems = [
-  { label: 'Dashboard', path: '/admin/dashboard', icon: <LayoutDashboard size={16} /> },
-  { label: 'Students', path: '/admin/students', icon: <Users size={16} /> },
+  { label: 'Dashboard',      path: '/admin/dashboard',            icon: <LayoutDashboard size={16} /> },
+  { label: 'Students',       path: '/admin/students',             icon: <Users size={16} /> },
+  { label: 'Create Student', path: '/admin/create-student',       icon: <UserPlus size={16} /> },
   { label: 'Assessments', path: '/admin/assessments', icon: <ClipboardList size={16} /> },
   { label: 'Question Bank', path: '/admin/question-bank', icon: <BookOpen size={16} /> },
   { label: 'Job Postings', path: '/admin/job-postings', icon: <Briefcase size={16} /> },
