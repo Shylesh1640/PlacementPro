@@ -204,10 +204,54 @@ Return JSON with these exact fields (use null if not found):
                 "parsed_by_ai":     True,
             }
 
+    # Regex-based fallback for JD parsing
+    return _fallback_parse_jd(jd_text)
+
+
+def _fallback_parse_jd(text: str) -> Dict[str, Any]:
+    """Extract job data using regex when Groq is unavailable."""
+    text_lower = text.lower()
+
+    # Extract skills by checking for known tech keywords
+    tech_keywords = [
+        'Python', 'Java', 'JavaScript', 'TypeScript', 'React', 'Node.js', 'C++', 'C#',
+        'Go', 'Rust', 'SQL', 'MySQL', 'PostgreSQL', 'MongoDB', 'Docker', 'Kubernetes',
+        'AWS', 'Azure', 'GCP', 'Machine Learning', 'Deep Learning', 'TensorFlow',
+        'PyTorch', 'Django', 'Flask', 'Spring', 'Git', 'Linux', 'DSA', 'System Design',
+        'REST', 'GraphQL', 'Redis', 'Kafka', 'CI/CD', 'DevOps', 'Agile', 'Scrum',
+    ]
+    found_skills = [k for k in tech_keywords if k.lower() in text_lower]
+
+    # Extract CGPA
+    cgpa_match = re.search(r'(?:cgpa|gpa)[^\d]*([6-9]\.[0-9])', text, re.I)
+    min_cgpa = float(cgpa_match.group(1)) if cgpa_match else None
+
+    # Extract location (Indian cities)
+    cities = ['Bangalore', 'Bengaluru', 'Mumbai', 'Delhi', 'Hyderabad', 'Chennai',
+              'Pune', 'Kolkata', 'Noida', 'Gurgaon', 'Gurugram', 'Mysore', 'Kochi']
+    location = next((c for c in cities if c.lower() in text_lower), '')
+
+    # Work mode
+    work_mode = 'on-site'
+    if 'remote' in text_lower:
+        work_mode = 'remote'
+    elif 'hybrid' in text_lower:
+        work_mode = 'hybrid'
+
+    # Title — first line or first sentence
+    first_line = text.strip().split('\n')[0].strip()[:80]
+
     return {
-        "title": "", "company": "", "description": jd_text,
-        "required_skills": [], "preferred_skills": [],
-        "min_cgpa": None, "max_backlogs": None, "location": "",
-        "work_mode": "on-site", "experience_level": "fresher",
-        "employment_type": "full-time", "parsed_by_ai": False,
+        "title":            first_line,
+        "company":          "",
+        "description":      text,
+        "required_skills":  found_skills[:8],
+        "preferred_skills": [],
+        "min_cgpa":         min_cgpa,
+        "max_backlogs":     None,
+        "location":         location,
+        "work_mode":        work_mode,
+        "experience_level": "fresher",
+        "employment_type":  "full-time",
+        "parsed_by_ai":     False,
     }
