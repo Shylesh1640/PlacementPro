@@ -17,14 +17,14 @@ create table public.profiles (
 alter table public.profiles enable row level security;
 
 create policy "Users can view their own profile" on public.profiles
-  for select using (auth.uid() = id);
+  for select using ((auth.uid())::uuid = id);
 
 create policy "Users can update their own profile" on public.profiles
-  for update using (auth.uid() = id);
+  for update using ((auth.uid())::uuid = id);
 
 create policy "Admins can view all profiles" on public.profiles
   for select using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+    exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin')
   );
 
 -- Auto-create profile on signup
@@ -72,11 +72,11 @@ create table public.students (
 alter table public.students enable row level security;
 
 create policy "Students can view and update own record" on public.students
-  for all using (profile_id = auth.uid());
+  for all using (profile_id = (auth.uid())::uuid);
 
 create policy "Admins can manage all students" on public.students
   for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+    exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin')
   );
 
 -- ============================================================
@@ -92,7 +92,7 @@ alter table public.skills enable row level security;
 
 create policy "Anyone can view skills" on public.skills for select using (true);
 create policy "Admins can manage skills" on public.skills
-  for all using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for all using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 create table public.student_skills (
   id uuid primary key default uuid_generate_v4(),
@@ -106,12 +106,12 @@ alter table public.student_skills enable row level security;
 
 create policy "Students manage own skills" on public.student_skills
   for all using (
-    exists (select 1 from public.students where id = student_id and profile_id = auth.uid())
+    exists (select 1 from public.students where id = student_id and profile_id = (auth.uid())::uuid)
   );
 
 create policy "Admins and partners view student skills" on public.student_skills
   for select using (
-    exists (select 1 from public.profiles where id = auth.uid() and role in ('admin', 'partner'))
+    exists (select 1 from public.profiles where id = (auth.uid())::uuid and role in ('admin', 'partner'))
   );
 
 -- ============================================================
@@ -130,10 +130,10 @@ create table public.projects (
 alter table public.projects enable row level security;
 
 create policy "Students manage own projects" on public.projects
-  for all using (exists (select 1 from public.students where id = student_id and profile_id = auth.uid()));
+  for all using (exists (select 1 from public.students where id = student_id and profile_id = (auth.uid())::uuid));
 
 create policy "Admins view all projects" on public.projects
-  for select using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for select using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 -- ============================================================
 -- INTERNSHIPS
@@ -152,10 +152,10 @@ create table public.internships (
 alter table public.internships enable row level security;
 
 create policy "Students manage own internships" on public.internships
-  for all using (exists (select 1 from public.students where id = student_id and profile_id = auth.uid()));
+  for all using (exists (select 1 from public.students where id = student_id and profile_id = (auth.uid())::uuid));
 
 create policy "Admins view all internships" on public.internships
-  for select using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for select using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 -- ============================================================
 -- CERTIFICATIONS
@@ -172,7 +172,7 @@ create table public.certifications (
 alter table public.certifications enable row level security;
 
 create policy "Students manage own certifications" on public.certifications
-  for all using (exists (select 1 from public.students where id = student_id and profile_id = auth.uid()));
+  for all using (exists (select 1 from public.students where id = student_id and profile_id = (auth.uid())::uuid));
 
 -- ============================================================
 -- QUESTION BANK
@@ -194,7 +194,7 @@ create table public.question_bank (
 alter table public.question_bank enable row level security;
 
 create policy "Admins manage question bank" on public.question_bank
-  for all using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for all using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 create policy "Students can view questions during assessment" on public.question_bank
   for select using (auth.uid() is not null);
@@ -220,7 +220,7 @@ create policy "Anyone authenticated can view active assessments" on public.asses
   for select using (auth.uid() is not null and is_active = true);
 
 create policy "Admins manage assessments" on public.assessments
-  for all using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for all using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 -- ============================================================
 -- ASSESSMENT QUESTIONS (junction)
@@ -239,7 +239,7 @@ create policy "Anyone authenticated can view assessment questions" on public.ass
   for select using (auth.uid() is not null);
 
 create policy "Admins manage assessment questions" on public.assessment_questions
-  for all using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for all using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 -- ============================================================
 -- ASSESSMENT ATTEMPTS
@@ -259,10 +259,10 @@ create table public.assessment_attempts (
 alter table public.assessment_attempts enable row level security;
 
 create policy "Students manage own attempts" on public.assessment_attempts
-  for all using (exists (select 1 from public.students where id = student_id and profile_id = auth.uid()));
+  for all using (exists (select 1 from public.students where id = student_id and profile_id = (auth.uid())::uuid));
 
 create policy "Admins view all attempts" on public.assessment_attempts
-  for select using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for select using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 -- ============================================================
 -- ATTEMPT ANSWERS
@@ -284,7 +284,7 @@ create policy "Students manage own answers" on public.attempt_answers
     exists (
       select 1 from public.assessment_attempts aa
       join public.students s on s.id = aa.student_id
-      where aa.id = attempt_id and s.profile_id = auth.uid()
+      where aa.id = attempt_id and s.profile_id = (auth.uid())::uuid
     )
   );
 
@@ -308,10 +308,10 @@ create table public.assessment_results (
 alter table public.assessment_results enable row level security;
 
 create policy "Students view own results" on public.assessment_results
-  for select using (exists (select 1 from public.students where id = student_id and profile_id = auth.uid()));
+  for select using (exists (select 1 from public.students where id = student_id and profile_id = (auth.uid())::uuid));
 
 create policy "Admins view all results" on public.assessment_results
-  for select using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for select using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 create policy "System can insert results" on public.assessment_results
   for insert with check (auth.uid() is not null);
@@ -337,10 +337,10 @@ create table public.readiness_scores (
 alter table public.readiness_scores enable row level security;
 
 create policy "Students view own readiness" on public.readiness_scores
-  for select using (exists (select 1 from public.students where id = student_id and profile_id = auth.uid()));
+  for select using (exists (select 1 from public.students where id = student_id and profile_id = (auth.uid())::uuid));
 
 create policy "Admins view all readiness scores" on public.readiness_scores
-  for select using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for select using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 create policy "System can upsert readiness scores" on public.readiness_scores
   for all using (auth.uid() is not null);
@@ -362,10 +362,10 @@ create table public.skill_gap_reports (
 alter table public.skill_gap_reports enable row level security;
 
 create policy "Students view own skill gaps" on public.skill_gap_reports
-  for select using (exists (select 1 from public.students where id = student_id and profile_id = auth.uid()));
+  for select using (exists (select 1 from public.students where id = student_id and profile_id = (auth.uid())::uuid));
 
 create policy "Admins view all skill gaps" on public.skill_gap_reports
-  for select using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for select using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 create policy "System can manage skill gaps" on public.skill_gap_reports
   for all using (auth.uid() is not null);
@@ -387,7 +387,7 @@ create table public.proctoring_rules (
 alter table public.proctoring_rules enable row level security;
 
 create policy "Admins manage proctoring rules" on public.proctoring_rules
-  for all using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for all using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 create policy "Anyone authenticated can view active rules" on public.proctoring_rules
   for select using (auth.uid() is not null);
@@ -415,7 +415,7 @@ create policy "Students view own proctoring events" on public.proctoring_events
     exists (
       select 1 from public.assessment_attempts aa
       join public.students s on s.id = aa.student_id
-      where aa.id = attempt_id and s.profile_id = auth.uid()
+      where aa.id = attempt_id and s.profile_id = (auth.uid())::uuid
     )
   );
 
@@ -423,7 +423,7 @@ create policy "System can insert proctoring events" on public.proctoring_events
   for insert with check (auth.uid() is not null);
 
 create policy "Admins manage proctoring events" on public.proctoring_events
-  for all using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for all using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 -- ============================================================
 -- COMPANIES
@@ -444,13 +444,13 @@ create table public.companies (
 alter table public.companies enable row level security;
 
 create policy "Partners manage own company" on public.companies
-  for all using (profile_id = auth.uid());
+  for all using (profile_id = (auth.uid())::uuid);
 
 create policy "Admins manage all companies" on public.companies
-  for all using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for all using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 create policy "Students and admins view verified companies" on public.companies
-  for select using (verified = true or profile_id = auth.uid() or exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for select using (verified = true or profile_id = (auth.uid())::uuid or exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 -- ============================================================
 -- JOBS
@@ -477,11 +477,11 @@ alter table public.jobs enable row level security;
 
 create policy "Partners manage own company jobs" on public.jobs
   for all using (
-    exists (select 1 from public.companies where id = company_id and profile_id = auth.uid())
+    exists (select 1 from public.companies where id = company_id and profile_id = (auth.uid())::uuid)
   );
 
 create policy "Admins manage all jobs" on public.jobs
-  for all using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for all using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 create policy "Students view open jobs" on public.jobs
   for select using (is_open = true and auth.uid() is not null);
@@ -522,16 +522,16 @@ create table public.job_matches (
 alter table public.job_matches enable row level security;
 
 create policy "Students view own job matches" on public.job_matches
-  for select using (exists (select 1 from public.students where id = student_id and profile_id = auth.uid()));
+  for select using (exists (select 1 from public.students where id = student_id and profile_id = (auth.uid())::uuid));
 
 create policy "Admins view all job matches" on public.job_matches
-  for select using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for select using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 create policy "Partners view matches for their jobs" on public.job_matches
   for select using (
     exists (
       select 1 from public.jobs j join public.companies c on c.id = j.company_id
-      where j.id = job_id and c.profile_id = auth.uid()
+      where j.id = job_id and c.profile_id = (auth.uid())::uuid
     )
   );
 
@@ -556,16 +556,16 @@ create table public.applications (
 alter table public.applications enable row level security;
 
 create policy "Students manage own applications" on public.applications
-  for all using (exists (select 1 from public.students where id = student_id and profile_id = auth.uid()));
+  for all using (exists (select 1 from public.students where id = student_id and profile_id = (auth.uid())::uuid));
 
 create policy "Admins manage all applications" on public.applications
-  for all using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for all using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 create policy "Partners view applications for their jobs" on public.applications
   for select using (
     exists (
       select 1 from public.jobs j join public.companies c on c.id = j.company_id
-      where j.id = job_id and c.profile_id = auth.uid()
+      where j.id = job_id and c.profile_id = (auth.uid())::uuid
     )
   );
 
@@ -591,14 +591,14 @@ create table public.interviews (
 alter table public.interviews enable row level security;
 
 create policy "Students view own interviews" on public.interviews
-  for select using (exists (select 1 from public.students where id = student_id and profile_id = auth.uid()));
+  for select using (exists (select 1 from public.students where id = student_id and profile_id = (auth.uid())::uuid));
 
 create policy "Admins manage all interviews" on public.interviews
-  for all using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for all using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 create policy "Partners view interviews for their company" on public.interviews
   for select using (
-    exists (select 1 from public.companies where id = company_id and profile_id = auth.uid())
+    exists (select 1 from public.companies where id = company_id and profile_id = (auth.uid())::uuid)
   );
 
 -- ============================================================
@@ -620,10 +620,10 @@ create table public.placements (
 alter table public.placements enable row level security;
 
 create policy "Students view own placement" on public.placements
-  for select using (exists (select 1 from public.students where id = student_id and profile_id = auth.uid()));
+  for select using (exists (select 1 from public.students where id = student_id and profile_id = (auth.uid())::uuid));
 
 create policy "Admins manage all placements" on public.placements
-  for all using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for all using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 -- ============================================================
 -- NOTIFICATIONS
@@ -642,7 +642,7 @@ create table public.notifications (
 alter table public.notifications enable row level security;
 
 create policy "Users manage own notifications" on public.notifications
-  for all using (user_id = auth.uid());
+  for all using (user_id = (auth.uid())::uuid);
 
 -- ============================================================
 -- AUDIT LOGS
@@ -661,7 +661,7 @@ create table public.audit_logs (
 alter table public.audit_logs enable row level security;
 
 create policy "Admins view all audit logs" on public.audit_logs
-  for select using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for select using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 create policy "System can insert audit logs" on public.audit_logs
   for insert with check (auth.uid() is not null);
@@ -685,7 +685,7 @@ alter table public.readiness_weights enable row level security;
 
 create policy "Anyone can view weights" on public.readiness_weights for select using (true);
 create policy "Admins manage weights" on public.readiness_weights
-  for all using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  for all using (exists (select 1 from public.profiles where id = (auth.uid())::uuid and role = 'admin'));
 
 insert into public.readiness_weights (academic_weight, aptitude_weight, programming_weight, communication_weight, internship_weight, projects_weight)
 values (25, 20, 20, 15, 10, 10);
