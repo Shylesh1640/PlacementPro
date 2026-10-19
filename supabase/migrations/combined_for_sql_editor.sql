@@ -451,7 +451,6 @@ create policy "weights_all"  on public.readiness_weights for all    using (auth.
 insert into public.readiness_weights
   (academic_weight, aptitude_weight, programming_weight, communication_weight, internship_weight, projects_weight)
 values (25, 20, 20, 15, 10, 10);
-
 -- ============================================================
 -- SEED DATA for PlacementPro Demo
 -- ============================================================
@@ -519,7 +518,6 @@ insert into public.question_bank (question, option_a, option_b, option_c, option
   ('Which sentence is grammatically correct?', 'He go to school every day.', 'He goes to school every day.', 'He going to school every day.', 'He gone to school every day.', 'B', 'Grammar', 'easy', 'communication'),
   ('What is the synonym of "Eloquent"?', 'Silent', 'Articulate', 'Confused', 'Hesitant', 'B', 'Vocabulary', 'medium', 'communication'),
   ('The passage says the company was founded in 1990. What type of question is this?', 'Inference question', 'Fact-based question', 'Opinion question', 'Analysis question', 'B', 'Reading Comprehension', 'easy', 'communication');
-
 -- PlacementPro Question Bank: 200 Aptitude + 200 Programming Questions
 -- Migration: 003_questions.sql
 
@@ -996,7 +994,6 @@ INSERT INTO public.question_bank (question, option_a, option_b, option_c, option
 ('What does the transient keyword do in Java?', 'Excludes a field from serialization', 'Makes field thread-safe', 'Prevents inheritance', 'Makes field mutable', 'A', 'Java Programming', 'medium', 'programming')
 
 ON CONFLICT DO NOTHING;
-
 -- Add department eligibility to assessments (safe to re-run)
 -- No-op if column already exists (001_initial_schema.sql v3 includes it)
 DO $$ BEGIN
@@ -1010,4 +1007,3 @@ DO $$ BEGIN
     ADD COLUMN eligible_departments text[] DEFAULT '{}';
   END IF;
 END $$;
-
