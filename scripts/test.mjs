@@ -5,6 +5,17 @@
 
 import { createClient } from '@supabase/supabase-js'
 
+// Wrap fetch to add a 30s timeout (Node 24 undici default is 10s — too short for cold Supabase starts)
+const _origFetch = globalThis.fetch.bind(globalThis)
+globalThis.fetch = (input, init = {}) => {
+  if (!init.signal) {
+    const ctrl = new AbortController()
+    setTimeout(() => ctrl.abort(), 30_000)
+    init = { ...init, signal: ctrl.signal }
+  }
+  return _origFetch(input, init)
+}
+
 const SUPABASE_URL = 'https://vrhnxkdkbfqvwfxbahbw.supabase.co'
 const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyaG54a2RrYmZxdndmeGJhaGJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNTM0MzMsImV4cCI6MjEwNzcyOTQzM30.gotG11pSI_dCKLI-S-UjQl7ch7T_cexzZ_8wRYvOIzk'
 const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyaG54a2RrYmZxdndmeGJhaGJ3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjE1MzQzMywiZXhwIjoyMTA3NzI5NDMzfQ.7d6VkoDCougLBdJ3-0voKe4EMkGrIccBSL9HbJ8yJK8'
