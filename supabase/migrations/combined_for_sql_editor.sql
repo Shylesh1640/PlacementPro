@@ -3,21 +3,7 @@
 
 create extension if not exists "uuid-ossp";
 
--- Security helper (SECURITY DEFINER avoids recursive RLS)
-create or replace function public.is_admin()
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select coalesce(
-    (select true from public.profiles where id = auth.uid() and role = 'admin' limit 1),
-    false
-  )
-$$;
-
--- ── PROFILES ─────────────────────────────────────────────────
+-- ── PROFILES (created first so helper functions can reference it) ──
 create table if not exists public.profiles (
   id         uuid primary key references auth.users(id) on delete cascade,
   email      text not null unique,
@@ -27,6 +13,40 @@ create table if not exists public.profiles (
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+-- Security helpers (SECURITY DEFINER, defined after profiles table exists)
+-- Using plpgsql so body is validated at call-time, not creation-time.
+create or replace function public.is_admin()
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+begin
+  return coalesce(
+    (select true from public.profiles where id = auth.uid() and role = 'admin' limit 1),
+    false
+  );
+end;
+$$;
+
+create or replace function public.is_partner()
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+begin
+  return coalesce(
+    (select true from public.profiles where id = auth.uid() and role = 'partner' limit 1),
+    false
+  );
+end;
+$$;
+
+-- Now enable RLS + policies on profiles
 alter table public.profiles enable row level security;
 create policy "profiles_own"   on public.profiles for all using (id = auth.uid());
 create policy "profiles_admin" on public.profiles for all using (public.is_admin());
