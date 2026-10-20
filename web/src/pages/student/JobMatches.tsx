@@ -8,6 +8,7 @@ import {
 } from '../../lib/queries'
 import { DEMO_MATCHES } from '../../lib/demo-data'
 
+
 const LOGO_COLORS: Record<string, { color: string; bg: string }> = {
   Google: { color: '#4285F4', bg: '#E8F0FE' },
   Microsoft: { color: '#00A4EF', bg: '#E3F5FD' },
@@ -53,12 +54,26 @@ export function JobMatches() {
     enabled: !!student?.id,
   })
 
+  const [refreshing, setRefreshing] = useState(false)
+
   const applyMutation = useMutation({
     mutationFn: (jobId: string) => applyToJob(student!.id, jobId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['applications', student?.id] }),
   })
 
-  const displayMatches = matches.length > 0 ? matches : DEMO_MATCHES
+  const handleRefresh = async () => {
+    if (!student?.id) return
+    setRefreshing(true)
+    try {
+      await runMatchingForStudent(student.id)
+      await qc.invalidateQueries({ queryKey: ['jobMatches', student?.id] })
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  // Use DB matches (keyed by match_percentage from DB); fallback to demo only when empty
+  const displayMatches = (matches as any[]).length > 0 ? (matches as any[]) : DEMO_MATCHES
   const appliedJobIds = new Set(applications.map((a: any) => a.job_id))
 
   return (
@@ -68,9 +83,19 @@ export function JobMatches() {
           <h1 className="text-2xl font-bold text-[#111827]">Your Job Matches</h1>
           <p className="text-sm text-[#4B5563] mt-0.5">Based on your skills, performance and readiness</p>
         </div>
-        <button className="flex items-center gap-2 text-sm font-medium text-[#4B5563] px-3 py-2 rounded-lg border border-[#E6E8F5] hover:bg-gray-50 transition-colors">
-          <Filter size={15} /> Filter
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing || !student?.id}
+            className="flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg border border-[#E6E8F5] text-[#4B5563] hover:bg-gray-50 disabled:opacity-50 transition-colors"
+          >
+            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+            {refreshing ? 'Finding matches…' : 'Refresh Matches'}
+          </button>
+          <button className="flex items-center gap-2 text-sm font-medium text-[#4B5563] px-3 py-2 rounded-lg border border-[#E6E8F5] hover:bg-gray-50 transition-colors">
+            <Filter size={15} /> Filter
+          </button>
+        </div>
       </div>
 
       {isLoading ? (

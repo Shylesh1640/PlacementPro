@@ -109,24 +109,13 @@ export async function calculateAndSaveReadiness(data: StudentData): Promise<void
   }
 }
 
-async function triggerJobMatching(studentId: string): Promise<void> {
+async function triggerJobMatching(studentId: string, _profileId?: string): Promise<void> {
   try {
-    const { data: jobs } = await supabase
-      .from('jobs')
-      .select('id')
-      .eq('is_open', true)
-      .limit(10)
-
-    if (!jobs?.length) return
-
-    await Promise.allSettled(
-      jobs.slice(0, 5).map(job =>
-        supabase.functions.invoke('run-job-matching', {
-          body: { student_id: studentId, job_id: job.id },
-        })
-      )
-    )
+    // Call AI service directly — bypasses undeployed edge function
+    const { runMatchingForStudent } = await import('./matching')
+    const count = await runMatchingForStudent(studentId)
+    if (count > 0) console.log(`Job matching complete: ${count} matches calculated`)
   } catch {
-    // Silent — matching will run on next trigger
+    // Silent fail — assessment submission succeeds regardless
   }
 }
