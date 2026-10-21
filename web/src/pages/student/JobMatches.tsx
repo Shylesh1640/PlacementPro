@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Filter, ChevronRight, Briefcase, CheckCircle } from 'lucide-react'
+import { Filter, ChevronRight, Briefcase, CheckCircle, RefreshCw } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
 import { useAuth } from '../../contexts/AuthContext'
 import {
   getStudentByProfileId, getJobMatches, applyToJob, getStudentApplications
 } from '../../lib/queries'
+import { runMatchingForStudent } from '../../lib/matching'
 import { DEMO_MATCHES } from '../../lib/demo-data'
 
 

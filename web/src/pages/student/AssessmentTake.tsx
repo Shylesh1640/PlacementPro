@@ -126,17 +126,29 @@ export function AssessmentTake() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showConsent, terminated])
 
+  // Attach stream to video once it becomes visible (camGranted → display:block)
+  useEffect(() => {
+    if (!camGranted || !streamRef.current) return
+    const v = videoRef.current
+    if (!v) return
+    v.srcObject = streamRef.current
+    v.play().catch(() => {
+      // Retry once on play() rejection (autoplay policy)
+      setTimeout(() => v.play().catch(() => {}), 200)
+    })
+  }, [camGranted])
+
   // Camera
   const startCamera = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video:{ width:{ideal:320}, height:{ideal:240}, facingMode:'user' }, audio:false })
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 320 }, height: { ideal: 240 }, facingMode: 'user' },
+        audio: false,
+      })
       streamRef.current = stream
-      const v = videoRef.current
-      if (v) {
-        v.srcObject = stream
-        v.onloadedmetadata = () => v.play().catch(()=>{})
-      }
-      setCamGranted(true); setShowConsent(false)
+      // Show video FIRST (removes display:none), then attach stream via useEffect above
+      setCamGranted(true)
+      setShowConsent(false)
       addEvent('all_clear','Proctoring started — camera active','low',false)
     } catch {
       setCamGranted(false); setShowConsent(false)

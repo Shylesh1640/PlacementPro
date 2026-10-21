@@ -3,6 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, LineChart, Line
 } from 'recharts'
+import { Download } from 'lucide-react'
 import { getDepartmentStats, getPlacementChartData, getAdminStats } from '../../lib/queries'
 import { DEMO_DEPT_STATS, DEMO_CHART_DATA, DEMO_ADMIN_STATS } from '../../lib/demo-data'
 
@@ -44,9 +45,29 @@ export function AdminAnalytics() {
 
   const placementRate = total > 0 ? Math.round((placed / total) * 100) : DEMO_ADMIN_STATS.placementRate
 
+  const exportCSV = () => {
+    const rows = [
+      ['Department', 'Placed', 'Total', 'Rate %'],
+      ...deptData.map((d: any) => [d.dept, d.placed, d.total ?? d.placed, d.total ? Math.round((d.placed / d.total) * 100) : '-']),
+      [],
+      ['Month', 'Placements'],
+      ...chartData.map((d: any) => [d.month, d.placements]),
+    ]
+    const csv  = rows.map(r => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a'); a.href = url; a.download = 'analytics.csv'; a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-[#111827]">Analytics</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-[#111827]">Analytics</h1>
+        <button onClick={exportCSV} className="flex items-center gap-2 text-sm font-medium text-[#4B5563] px-3 py-2 rounded-lg border border-[#E6E8F5] hover:bg-gray-50 transition-colors">
+          <Download size={15} /> Export CSV
+        </button>
+      </div>
 
       {/* Summary stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

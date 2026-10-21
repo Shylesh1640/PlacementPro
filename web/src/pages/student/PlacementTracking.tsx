@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { CheckCircle, Circle, Trophy, ArrowRight } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import {
   getStudentByProfileId, getStudentInterviews, getStudentPlacement, getStudentApplications
@@ -34,6 +34,7 @@ function getStepsCompleted(
 
 export function PlacementTracking() {
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   const { data: student, isLoading } = useQuery({
     queryKey: ['student', user?.id],
@@ -170,10 +171,11 @@ export function PlacementTracking() {
             )}
           </div>
           <button
+            onClick={() => navigate('/student/interviews')}
             className="text-sm font-medium px-6 py-2.5 rounded-lg text-white"
             style={{ background: '#4F46E5' }}
           >
-            View Details
+            View Placement Details
           </button>
         </div>
       )}
