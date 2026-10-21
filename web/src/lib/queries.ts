@@ -454,6 +454,24 @@ export async function deleteAssessment(id: string): Promise<any> {
   if (error) throw error
 }
 
+export async function updateAssessment(id: string, payload: {
+  title?: string
+  description?: string
+  duration_minutes?: number
+  total_marks?: number
+  pass_marks?: number
+  eligible_departments?: string[]
+}): Promise<any> {
+  const { data, error } = await db
+    .from('assessments')
+    .update(payload)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
 // ─── Question Bank ────────────────────────────────────────────────────────
 
 export async function getAllQuestions(filters?: { category?: string; difficulty?: string }): Promise<any> {
