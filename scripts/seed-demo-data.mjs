@@ -1,11 +1,31 @@
+import { readFileSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+// Load .env from project root
+const __d = dirname(fileURLToPath(import.meta.url))
+const envPath = join(__d, '..', '.env')
+const env = Object.fromEntries(
+  readFileSync(envPath, 'utf8').split('
+')
+    .filter(l => l.includes('=') && !l.startsWith('#'))
+    .map(l => [l.split('=')[0].trim(), l.split('=').slice(1).join('=').trim()])
+)
+
+const SUPABASE_URL  = env.SUPABASE_URL  ?? ''
+const SERVICE_KEY   = env.SUPABASE_SERVICE_KEY ?? ''
+const ANON_KEY      = env.SUPABASE_ANON_KEY    ?? ''
+const PROJECT_REF   = env.PROJECT_REF  ?? 'vrhnxkdkbfqvwfxbahbw'
+const POOLER_HOST   = env.POOLER_HOST  ?? 'aws-0-ap-south-1.pooler.supabase.com'
+
 /**
  * PlacementPro — Comprehensive Demo Data Seeder
  * Usage: node scripts/seed-demo-data.mjs
  */
 import { createClient } from '@supabase/supabase-js'
 
-const SUPABASE_URL = 'https://vrhnxkdkbfqvwfxbahbw.supabase.co'
-const SERVICE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyaG54a2RrYmZxdndmeGJhaGJ3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjE1MzQzMywiZXhwIjoyMTA3NzI5NDMzfQ.7d6VkoDCougLBdJ3-0voKe4EMkGrIccBSL9HbJ8yJK8'
+const SUPABASE_URL = SUPABASE_URL
+const SERVICE_KEY  = SERVICE_KEY
 
 // Use service role — bypasses RLS
 const db = createClient(SUPABASE_URL, SERVICE_KEY, {

@@ -1,0 +1,85 @@
+name: PlacementPro CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Frontend TypeScript build ─────────────────────────────────────────
+  frontend-build:
+    name: Frontend Build & Type Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npx tsc --noEmit
+
+      - name: Production build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder_anon_key_for_ci_build_only
+          VITE_AI_SERVICE_URL: http://localhost:8000
+
+      - name: Report bundle size
+        run: |
+          echo "Bundle sizes:"
+          du -sh dist/assets/*.js 2>/dev/null | sort -h || echo "(no JS files found)"
+
+  # ── AI Service Python tests ───────────────────────────────────────────
+  ai-service-tests:
+    name: AI Service Tests (pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: ai-service/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pytest
+        run: python -m pytest tests/ -v --tb=short --no-header
+
+  # ── Pipeline summary ──────────────────────────────────────────────────
+  summary:
+    name: CI Summary
+    needs: [frontend-build, ai-service-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Report
+        run: |
+          echo "================================="
+          echo "PlacementPro CI Results"
+          echo "================================="
+          echo "Frontend build : ${{ needs.frontend-build.result }}"
+          echo "AI service tests: ${{ needs.ai-service-tests.result }}"
+          echo "================================="
+          if [[ "${{ needs.frontend-build.result }}" != "success" || "${{ needs.ai-service-tests.result }}" != "success" ]]; then
+            echo "❌ CI pipeline FAILED"
+            exit 1
+          fi
+          echo "✅ All checks passed — ready to merge"

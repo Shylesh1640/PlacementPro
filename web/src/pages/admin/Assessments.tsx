@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, ToggleLeft, ToggleRight, Users, Edit } from 'lucide-react'
+import { Plus, Trash2, ToggleLeft, ToggleRight, Users, Edit, BookOpen, X } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
@@ -8,6 +8,8 @@ import { Select } from '../../components/ui/Select'
 import {
   getAllAssessmentsAdmin, createAssessment, toggleAssessmentActive,
   deleteAssessment, updateAssessment,
+  getAssessmentQuestionIds, addQuestionToAssessment, removeQuestionFromAssessment,
+  getAllQuestions,
 } from '../../lib/queries'
 import { supabase } from '../../lib/supabase'
 
@@ -36,6 +38,9 @@ export function AdminAssessments() {
   const [editItem,      setEditItem]      = useState<any | null>(null)
   const [editForm,      setEditForm]      = useState({ ...BLANK_FORM })
   const [editDepts,     setEditDepts]     = useState<string[]>([])
+  // Question management
+  const [qAssessment,   setQAssessment]   = useState<any | null>(null)
+  const [qSearch,       setQSearch]       = useState('')
 
   const { data: assessments = [], isLoading } = useQuery({
     queryKey: ['adminAssessments'],
@@ -85,6 +90,31 @@ export function AdminAssessments() {
     mutationFn: (id: string) => deleteAssessment(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['adminAssessments'] }),
   })
+
+  // Question management queries
+  const { data: assignedQIds = [] } = useQuery({
+    queryKey: ['assessmentQIds', qAssessment?.id],
+    queryFn: () => getAssessmentQuestionIds(qAssessment!.id),
+    enabled: !!qAssessment?.id,
+  })
+  const { data: allQuestions = [] } = useQuery({
+    queryKey: ['allQForAssign'],
+    queryFn: () => getAllQuestions(),
+    enabled: !!qAssessment,
+  })
+  const addQMutation = useMutation({
+    mutationFn: ({ qid }: { qid: string }) =>
+      addQuestionToAssessment(qAssessment!.id, qid, (assignedQIds as any[]).length + 1),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['assessmentQIds', qAssessment?.id] }),
+  })
+  const removeQMutation = useMutation({
+    mutationFn: ({ qid }: { qid: string }) => removeQuestionFromAssessment(qAssessment!.id, qid),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['assessmentQIds', qAssessment?.id] }),
+  })
+  const assignedIdSet = new Set((assignedQIds as any[]).map((r: any) => r.question_id))
+  const filteredQs = (allQuestions as any[]).filter((q: any) =>
+    !qSearch || q.question.toLowerCase().includes(qSearch.toLowerCase()) || q.topic?.toLowerCase().includes(qSearch.toLowerCase())
+  )
 
   const openEdit = (a: any) => {
     setEditItem(a)
@@ -168,6 +198,13 @@ export function AdminAssessments() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => { setQAssessment(a); setQSearch('') }}
+                    className="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-[#E6E8F5] text-[#4B5563] hover:bg-[#EEF0FF] hover:text-[#4F46E5] hover:border-[#C7D2FE] transition-colors"
+                    title="Manage Questions"
+                  >
+                    <BookOpen size={13} /> Questions
+                  </button>
                   <button onClick={() => openEdit(a)} className="p-2 rounded-lg border border-[#E6E8F5] text-[#4B5563] hover:bg-[#EEF0FF] hover:text-[#4F46E5] hover:border-[#C7D2FE] transition-colors" title="Edit">
                     <Edit size={15} />
                   </button>

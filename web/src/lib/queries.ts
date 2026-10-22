@@ -401,17 +401,16 @@ export async function getAdminStats(): Promise<any> {
   }
 }
 
-export async function getAllStudentsAdmin(): Promise<any> {
-  const { data, error } = await db
+export async function getAllStudentsAdmin(page = 0, pageSize = 20): Promise<any> {
+  const from = page * pageSize
+  const to   = from + pageSize - 1
+  const { data, error, count } = await db
     .from('students')
-    .select(`
-      *,
-      profiles(full_name, email),
-      readiness_scores(total_score, status)
-    `)
+    .select(`*, profiles(full_name, email), readiness_scores(total_score, status)`, { count: 'exact' })
     .order('created_at', { ascending: false })
+    .range(from, to)
   if (error && !tableMissing(error)) throw error
-  return data ?? []
+  return { data: data ?? [], count: count ?? 0 }
 }
 
 export async function getAllAssessmentsAdmin(): Promise<any> {
@@ -560,13 +559,16 @@ export async function getCompanyJobs(companyId: string): Promise<any> {
   return data ?? []
 }
 
-export async function getAllJobsAdmin(): Promise<any> {
-  const { data, error } = await db
+export async function getAllJobsAdmin(page = 0, pageSize = 15): Promise<any> {
+  const from = page * pageSize
+  const to   = from + pageSize - 1
+  const { data, error, count } = await db
     .from('jobs')
-    .select('*, companies(name, verified)')
+    .select('*, companies(name, verified)', { count: 'exact' })
     .order('created_at', { ascending: false })
+    .range(from, to)
   if (error && !tableMissing(error)) throw error
-  return data ?? []
+  return { data: data ?? [], count: count ?? 0 }
 }
 
 export async function createJob(companyId: string, payload: {
@@ -754,5 +756,33 @@ export async function updateReadinessWeights(weights: Record<string, number>): P
   const { error } = await db
     .from('readiness_weights')
     .insert({ ...weights, updated_at: new Date().toISOString() })
+  if (error) throw error
+}
+
+// ─── Assessment Questions ─────────────────────────────────────────────────
+
+export async function getAssessmentQuestionIds(assessmentId: string): Promise<any> {
+  const { data, error } = await db
+    .from('assessment_questions')
+    .select('question_id, order_index')
+    .eq('assessment_id', assessmentId)
+    .order('order_index')
+  if (error && !tableMissing(error)) throw error
+  return data ?? []
+}
+
+export async function addQuestionToAssessment(assessmentId: string, questionId: string, orderIndex: number): Promise<any> {
+  const { error } = await db
+    .from('assessment_questions')
+    .upsert({ assessment_id: assessmentId, question_id: questionId, order_index: orderIndex })
+  if (error) throw error
+}
+
+export async function removeQuestionFromAssessment(assessmentId: string, questionId: string): Promise<any> {
+  const { error } = await db
+    .from('assessment_questions')
+    .delete()
+    .eq('assessment_id', assessmentId)
+    .eq('question_id', questionId)
   if (error) throw error
 }

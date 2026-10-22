@@ -1,3 +1,23 @@
+import { readFileSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+// Load .env from project root
+const __d = dirname(fileURLToPath(import.meta.url))
+const envPath = join(__d, '..', '.env')
+const env = Object.fromEntries(
+  readFileSync(envPath, 'utf8').split('
+')
+    .filter(l => l.includes('=') && !l.startsWith('#'))
+    .map(l => [l.split('=')[0].trim(), l.split('=').slice(1).join('=').trim()])
+)
+
+const SUPABASE_URL  = env.SUPABASE_URL  ?? ''
+const SERVICE_KEY   = env.SUPABASE_SERVICE_KEY ?? ''
+const ANON_KEY      = env.SUPABASE_ANON_KEY    ?? ''
+const PROJECT_REF   = env.PROJECT_REF  ?? 'vrhnxkdkbfqvwfxbahbw'
+const POOLER_HOST   = env.POOLER_HOST  ?? 'aws-0-ap-south-1.pooler.supabase.com'
+
 /**
  * PlacementPro Migration Runner
  * ─────────────────────────────
